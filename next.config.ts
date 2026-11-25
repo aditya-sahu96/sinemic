@@ -5,8 +5,6 @@ const nextConfig: NextConfig = {
   experimental: {
     agentFeedback: true,
   },
-  cacheComponents: true,
-  partialPrefetching: true,
   serverExternalPackages: ["better-sqlite3"],
   turbopack: {
     rules: {

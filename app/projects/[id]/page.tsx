@@ -1,18 +1,37 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { StepIndicator, STEPS, type StepId } from "@/components/ui/StepIndicator";
 import { Textarea, EmptyState, Tabs, TabsList, TabsTrigger, TabsContent, Card, CardContent, Button, Badge } from "@/components/ui";
-import { FileIcon, CodeIcon, SearchIcon, TerminalIcon, AlertCircleIcon, ChevronDownIcon, ChevronUpIcon, CheckIcon, XIcon, SparklesIcon } from "@/components/ui/icons";
+import { FileIcon, CodeIcon, SearchIcon, TerminalIcon, AlertCircleIcon, ChevronDownIcon, ChevronUpIcon, CheckIcon, XIcon, SparklesIcon, LoaderIcon } from "@/components/ui/icons";
 
-const mockFiles = [
-  { name: "src/app/checkout/page.tsx", type: "file", symbol: "CheckoutPage" },
-  { name: "src/components/Cart.tsx", type: "file", symbol: "Cart" },
-  { name: "src/components/PaymentForm.tsx", type: "file", symbol: "PaymentForm" },
-  { name: "src/lib/stripe.ts", type: "file", symbol: "stripe" },
-  { name: "src/types/order.ts", type: "file", symbol: "Order" },
-  { name: "src/hooks/useCart.ts", type: "file", symbol: "useCart" },
-];
+interface SymbolNode {
+  id: string;
+  name: string;
+  kind: string;
+  filePath: string;
+  startLine: number;
+  endLine: number;
+  signature?: string;
+}
+
+interface SymbolEdge {
+  from: string;
+  to: string;
+  kind: string;
+  resolved: boolean;
+}
+
+interface SymbolGraph {
+  language: string;
+  nodes: SymbolNode[];
+  edges: SymbolEdge[];
+  coverage: {
+    filesParsed: number;
+    filesSkipped: number;
+    skippedReasons: string[];
+  };
+}
 
 const mockDiff = `diff --git a/src/components/PaymentForm.tsx b/src/components/PaymentForm.tsx
 index abc123..def456 100644
@@ -54,11 +73,71 @@ const mockLedger = [
   { step: "Approve", model: "Human", tokens: 0, time: "14:30" },
 ];
 
-export default function ProjectWorkspacePage() {
+export default function ProjectWorkspacePage({ params }: { params: Promise<{ id: string }> }) {
   const [currentStep, setCurrentStep] = useState<StepId>("describe");
   const [task, setTask] = useState("");
   const [activeTab, setActiveTab] = useState("diff");
   const [showContext, setShowContext] = useState(false);
+  const [graph, setGraph] = useState<SymbolGraph | null>(null);
+  const [extracting, setExtracting] = useState(true);
+  const [extractError, setExtractError] = useState<string | null>(null);
+  const [projectId, setProjectId] = useState("");
+
+  useEffect(() => {
+    params.then((p) => setProjectId(p.id));
+  }, [params]);
+
+  useEffect(() => {
+    if (!projectId) return;
+    let cancelled = false;
+    async function extract() {
+      try {
+        setExtracting(true);
+        setExtractError(null);
+        const res = await fetch(`/api/projects/${projectId}/extract`, { method: "POST" });
+        if (!res.ok) {
+          const data = await res.json();
+          if (data.error === "NEED_MODULE") {
+            setExtractError("NEED_MODULE");
+          } else {
+            setExtractError(data.error || "Extraction failed");
+          }
+          return;
+        }
+        const data = await res.json();
+        if (!cancelled) setGraph(data.graph);
+      } catch {
+        if (!cancelled) setExtractError("Network error");
+      } finally {
+        if (!cancelled) setExtracting(false);
+      }
+    }
+    extract();
+    return () => { cancelled = true; };
+  }, [projectId]);
+
+  const symbolsByFile = graph
+    ? Object.entries(
+        graph.nodes.reduce((acc, node) => {
+          const rel = node.filePath;
+          if (!acc[rel]) acc[rel] = [];
+          acc[rel].push(node);
+          return acc;
+        }, {} as Record<string, SymbolNode[]>)
+      )
+    : [];
+
+  function kindIcon(kind: string) {
+    switch (kind) {
+      case "function": return <CodeIcon className="w-4 h-4 text-text-muted flex-shrink-0" />;
+      case "class": return <CodeIcon className="w-4 h-4 text-text-muted flex-shrink-0" />;
+      case "type": return <CodeIcon className="w-4 h-4 text-text-muted flex-shrink-0" />;
+      case "variable": return <CodeIcon className="w-4 h-4 text-text-muted flex-shrink-0" />;
+      case "import": return <SearchIcon className="w-4 h-4 text-text-muted flex-shrink-0" />;
+      case "export": return <SearchIcon className="w-4 h-4 text-text-muted flex-shrink-0" />;
+      default: return <FileIcon className="w-4 h-4 text-text-muted flex-shrink-0" />;
+    }
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -78,19 +157,58 @@ export default function ProjectWorkspacePage() {
             <CardContent className="p-4 h-full flex flex-col">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-text-primary">Files & Symbols</h3>
-                <Badge variant="proposed" className="text-xs">{mockFiles.length} files</Badge>
+                {extracting && (
+                  <LoaderIcon className="w-4 h-4 text-primary animate-spin" />
+                )}
+                {!extracting && graph && (
+                  <Badge variant="proposed" className="text-xs">{graph.nodes.length} symbols</Badge>
+                )}
+                {!extracting && !graph && !extractError && (
+                  <Badge variant="proposed" className="text-xs">0 symbols</Badge>
+                )}
               </div>
               <div className="flex-1 overflow-y-auto space-y-1">
-                {mockFiles.map((file, index) => (
-                  <button
-                    key={index}
-                    className="w-full text-left px-3 py-2 text-sm rounded-[var(--radius-control)] hover:bg-background transition-base flex items-center gap-2"
-                  >
-                    <FileIcon className="w-4 h-4 text-text-muted flex-shrink-0" />
-                    <span className="truncate font-mono text-text-primary">{file.name}</span>
-<Badge variant="proposed" className="text-xs ml-auto">{file.symbol}</Badge>
-                  </button>
-                ))}
+                {extracting ? (
+                  <div className="flex items-center justify-center h-full">
+                    <LoaderIcon className="w-6 h-6 text-primary animate-spin" />
+                  </div>
+                ) : extractError === "NEED_MODULE" ? (
+                  <EmptyState
+                    icon="alert"
+                    title="Engine modules missing"
+                    description="The stack detection or adapter modules are not available."
+                  />
+                ) : extractError ? (
+                  <EmptyState
+                    icon="alert"
+                    title="Extraction failed"
+                    description={extractError}
+                  />
+                ) : symbolsByFile.length > 0 ? (
+                  symbolsByFile.map(([filePath, nodes], fileIndex) => (
+                    <div key={fileIndex} className="space-y-1">
+                      <div className="px-2 py-1 text-xs text-text-muted font-mono uppercase tracking-wider">
+                        {filePath}
+                      </div>
+                      {nodes.map((node, nodeIndex) => (
+                        <button
+                          key={`${fileIndex}-${nodeIndex}`}
+                          className="w-full text-left px-3 py-2 text-sm rounded-[var(--radius-control)] hover:bg-background transition-base flex items-center gap-2"
+                        >
+                          {kindIcon(node.kind)}
+                          <span className="truncate font-mono text-text-primary">{node.name}</span>
+                          <Badge variant="proposed" className="text-[10px] ml-auto capitalize">{node.kind}</Badge>
+                        </button>
+                      ))}
+                    </div>
+                  ))
+                ) : (
+                  <EmptyState
+                    icon="file"
+                    title="No symbols found"
+                    description="The project may be empty or extraction returned no results."
+                  />
+                )}
               </div>
             </CardContent>
           </Card>
@@ -270,16 +388,47 @@ src/
       <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-surface border-t border-border p-4 max-h-[60vh] overflow-y-auto">
         <h3 className="font-semibold text-text-primary mb-3">Files & Symbols</h3>
         <div className="space-y-1">
-          {mockFiles.map((file, index) => (
-            <button
-              key={index}
-              className="w-full text-left px-3 py-2 text-sm rounded-[var(--radius-control)] hover:bg-background transition-base flex items-center gap-2"
-            >
-              <FileIcon className="w-4 h-4 text-text-muted flex-shrink-0" />
-              <span className="truncate font-mono text-text-primary">{file.name}</span>
-              <Badge variant="proposed" className="text-xs ml-auto">{file.symbol}</Badge>
-            </button>
-          ))}
+          {extracting ? (
+            <div className="flex items-center justify-center py-8">
+              <LoaderIcon className="w-6 h-6 text-primary animate-spin" />
+            </div>
+          ) : extractError === "NEED_MODULE" ? (
+            <EmptyState
+              icon="alert"
+              title="Engine modules missing"
+              description="The stack detection or adapter modules are not available."
+            />
+          ) : extractError ? (
+            <EmptyState
+              icon="alert"
+              title="Extraction failed"
+              description={extractError}
+            />
+          ) : symbolsByFile.length > 0 ? (
+            symbolsByFile.map(([filePath, nodes], fileIndex) => (
+              <div key={fileIndex} className="space-y-1">
+                <div className="px-2 py-1 text-xs text-text-muted font-mono uppercase tracking-wider">
+                  {filePath}
+                </div>
+                {nodes.map((node, nodeIndex) => (
+                  <button
+                    key={`${fileIndex}-${nodeIndex}`}
+                    className="w-full text-left px-3 py-2 text-sm rounded-[var(--radius-control)] hover:bg-background transition-base flex items-center gap-2"
+                  >
+                    {kindIcon(node.kind)}
+                    <span className="truncate font-mono text-text-primary">{node.name}</span>
+                    <Badge variant="proposed" className="text-[10px] ml-auto capitalize">{node.kind}</Badge>
+                  </button>
+                ))}
+              </div>
+            ))
+          ) : (
+            <EmptyState
+              icon="file"
+              title="No symbols found"
+              description="The project may be empty or extraction returned no results."
+            />
+          )}
         </div>
       </div>
     </div>
