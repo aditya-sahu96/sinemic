@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import type { Ledger } from "@/engine/contracts";
 import type { CheckResult } from "@/engine/contracts/types";
 import { StepIndicator, STEPS, type StepId } from "@/components/ui/StepIndicator";
-import { Textarea, EmptyState, Tabs, TabsList, TabsTrigger, TabsContent, Card, CardContent, Button, Badge } from "@/components/ui";
+import { Textarea, EmptyState, Tabs, TabsList, TabsTrigger, TabsContent, Card, CardContent, Button, Badge, ToastProvider, useToast, FirstVisitTour } from "@/components/ui";
 import { FileIcon, CodeIcon, SearchIcon, TerminalIcon, AlertCircleIcon, ChevronDownIcon, ChevronUpIcon, CheckIcon, XIcon, SparklesIcon, LoaderIcon } from "@/components/ui/icons";
 
 interface SymbolNode {
@@ -57,7 +57,7 @@ index abc123..def456 100644
 +    });
    };
  
-   return (`;
+   `;
 
 const mockChecks = [
   { name: "TypeScript", status: "pass", duration: "2.3s" },
@@ -92,6 +92,8 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
   const [verifyError, setVerifyError] = useState<string | null>(null);
   const [requestsLeft, setRequestsLeft] = useState<number | null>(null);
   const [requestsLimit, setRequestsLimit] = useState<number | null>(null);
+
+  const { addToast } = useToast();
 
   const requirementsList =
     ledger && ledger.requirements.length > 0 ? (
@@ -226,16 +228,20 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
         const data = await res.json();
         if (data.error === "NEED_MODULE") {
           setContextError("NEED_MODULE");
+          addToast({ type: "error", title: "Engine modules missing" });
         } else {
           setContextError(data.error || "Context pack failed");
+          addToast({ type: "error", title: "Context pack failed", message: data.error || "Unknown error" });
         }
         return;
       }
       const data = await res.json();
       setPack(data.pack);
       setSelection(data.selection);
+      addToast({ type: "success", title: "Context pack ready", message: `${pack.included.length} symbols included` });
     } catch {
       setContextError("Network error");
+      addToast({ type: "error", title: "Network error", message: "Failed to load context pack" });
     } finally {
       setContextLoading(false);
     }
@@ -256,6 +262,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
       const data = await res.json();
       if (data.error) {
         setRunError(data.error);
+        addToast({ type: "error", title: "Run failed", message: data.error || "Unknown error" });
         return;
       }
       const patchesWithOld = await Promise.all(
@@ -275,6 +282,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
       );
       setPatches(patchesWithOld);
       setCurrentStep("review");
+      addToast({ type: "success", title: "Task complete", message: `${patchesWithOld.length} file(s) changed` });
 
       const verifyRes = await fetch(`/api/projects/${projectId}/verify`, {
         method: "POST",
@@ -284,9 +292,11 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
       const verifyData = await verifyRes.json();
       if (verifyData.error) {
         setVerifyError(verifyData.error);
+        addToast({ type: "error", title: "Verification failed", message: verifyData.error || "Unknown error" });
       } else {
         setVerifyResults(verifyData.checks ?? []);
         setCurrentStep("check");
+        addToast({ type: "success", title: "Verification complete", message: `All checks finished` });
       }
       if (data.requestsLeft !== undefined) {
         setRequestsLeft(data.requestsLeft);
@@ -294,6 +304,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
       }
     } catch {
       setRunError("Network error");
+      addToast({ type: "error", title: "Network error", message: "Failed to run task" });
     } finally {
       setRunLoading(false);
     }
@@ -315,15 +326,19 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
           const data = await res.json();
           if (data.error === "NEED_MODULE") {
             setExtractError("NEED_MODULE");
+            addToast({ type: "error", title: "Engine modules missing" });
           } else {
             setExtractError(data.error || "Extraction failed");
+            addToast({ type: "error", title: "Extraction failed", message: data.error || "Unknown error" });
           }
           return;
         }
         const data = await res.json();
         if (!cancelled) setGraph(data.graph);
+        if (!cancelled) addToast({ type: "success", title: "Symbols extracted", message: `${data.graph.nodes.length} symbols found` });
       } catch {
         if (!cancelled) setExtractError("Network error");
+        if (!cancelled) addToast({ type: "error", title: "Extraction failed", message: "Network error" });
       } finally {
         if (!cancelled) setExtracting(false);
       }
@@ -347,8 +362,10 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
         }
         const data = await res.json();
         if (!cancelled) setLedger(data.ledger);
+        if (!cancelled) addToast({ type: "success", title: "Ledger loaded", message: `${data.ledger.requirements.length} requirements` });
       } catch {
         if (!cancelled) setLedgerError("Network error");
+        if (!cancelled) addToast({ type: "error", title: "Ledger load failed", message: "Network error" });
       } finally {
         if (!cancelled) setLedgerLoading(false);
       }
@@ -356,6 +373,19 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
     fetchLedger();
     return () => { cancelled = true; };
   }, [projectId]);
+
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Enter" && (event.target as HTMLElement).closest("textarea,input,button") === null) {
+        runTask();
+      }
+      if (event.key === "Escape") {
+        setShowContext(false);
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [runTask, setShowContext]);
 
   const symbolsByFile = graph
     ? Object.entries(
@@ -381,8 +411,10 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="border-b border-border bg-surface/50 sticky top-0 z-10">
+    <ToastProvider>
+      <div className="min-h-screen bg-background">
+        <FirstVisitTour />
+        <div className="border-b border-border bg-surface/50 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <StepIndicator currentStep={currentStep} />
         </div>
@@ -790,8 +822,8 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
           </Card>
         </aside>
       </div>
-
-      {/* Mobile Files Drawer */}
+    </div>
+    {/* Mobile Files Drawer */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-surface border-t border-border p-4 max-h-[60vh] overflow-y-auto">
         <h3 className="font-semibold text-text-primary mb-3">Files & Symbols</h3>
         <div className="space-y-1">
@@ -844,7 +876,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
           )}
         </div>
       </div>
-    </div>
+    </ToastProvider>
   );
 }
 

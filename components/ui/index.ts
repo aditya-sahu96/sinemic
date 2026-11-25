@@ -9,6 +9,12 @@ export type { BadgeVariant } from "./Badge";
 export { Toast, ToastContainer } from "./Toast";
 export type { ToastType } from "./Toast";
 
+export { ToastProvider } from "./ToastProvider";
+export type { ToastItem } from "./ToastProvider";
+export { useToast } from "./ToastProvider";
+
+export { FirstVisitTour } from "./FirstVisitTour";
+
 export { StepIndicator, StepIndicatorMobile, STEPS } from "./StepIndicator";
 export type { StepId } from "./StepIndicator";
 
