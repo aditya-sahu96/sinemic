@@ -82,6 +82,46 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
   const [extracting, setExtracting] = useState(true);
   const [extractError, setExtractError] = useState<string | null>(null);
   const [projectId, setProjectId] = useState("");
+  const [selectedTargetFiles, setSelectedTargetFiles] = useState<string[]>([]);
+  const [pack, setPack] = useState<any>(null);
+  const [selection, setSelection] = useState<any>(null);
+  const [contextLoading, setContextLoading] = useState(false);
+  const [contextError, setContextError] = useState<string | null>(null);
+
+  function toggleTargetFile(filePath: string) {
+    setSelectedTargetFiles((prev) =>
+      prev.includes(filePath) ? prev.filter((f) => f !== filePath) : [...prev, filePath]
+    );
+  }
+
+  async function runContext() {
+    if (!projectId || !task.trim()) return;
+    setContextLoading(true);
+    setContextError(null);
+    try {
+      const res = await fetch(`/api/projects/${projectId}/context`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ task, targetFiles: selectedTargetFiles }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        if (data.error === "NEED_MODULE") {
+          setContextError("NEED_MODULE");
+        } else {
+          setContextError(data.error || "Context pack failed");
+        }
+        return;
+      }
+      const data = await res.json();
+      setPack(data.pack);
+      setSelection(data.selection);
+    } catch {
+      setContextError("Network error");
+    } finally {
+      setContextLoading(false);
+    }
+  }
 
   useEffect(() => {
     params.then((p) => setProjectId(p.id));
@@ -187,8 +227,14 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                 ) : symbolsByFile.length > 0 ? (
                   symbolsByFile.map(([filePath, nodes], fileIndex) => (
                     <div key={fileIndex} className="space-y-1">
-                      <div className="px-2 py-1 text-xs text-text-muted font-mono uppercase tracking-wider">
+                      <div
+                        className="px-2 py-1 text-xs text-text-muted font-mono uppercase tracking-wider cursor-pointer select-none"
+                        onClick={() => toggleTargetFile(filePath)}
+                      >
                         {filePath}
+                        {selectedTargetFiles.includes(filePath) && (
+                          <span className="text-primary"> ✓</span>
+                        )}
                       </div>
                       {nodes.map((node, nodeIndex) => (
                         <button
@@ -219,6 +265,21 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
           <Card>
             <CardContent className="p-6 space-y-4">
               <h3 className="font-semibold text-text-primary">Task</h3>
+              {selectedTargetFiles.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-3">
+                  <span className="text-xs text-text-muted">Targets:</span>
+                  {selectedTargetFiles.map((fp) => (
+                    <span
+                      key={fp}
+                      className="text-xs bg-background border border-border px-2 py-1 rounded text-text-primary font-mono truncate max-w-[200px] flex items-center gap-1 cursor-pointer hover:bg-surface"
+                      onClick={() => toggleTargetFile(fp)}
+                    >
+                      {fp}
+                      <XIcon className="w-3 h-3" />
+                    </span>
+                  ))}
+                </div>
+              )}
               <Textarea
                 value={task}
                 onChange={(e) => setTask(e.target.value)}
@@ -232,11 +293,15 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                 </p>
                 <Button
                   size="lg"
-                  disabled={!task.trim()}
-                  onClick={() => setCurrentStep("review")}
+                  disabled={!task.trim() || contextLoading}
+                  onClick={runContext}
                 >
-                  <SparklesIcon className="w-4 h-4 mr-2" />
-                  Run task
+                  {contextLoading ? (
+                    <LoaderIcon className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <SparklesIcon className="w-4 h-4 mr-2" />
+                  )}
+                  {contextLoading ? "Building context…" : "Run task"}
                 </Button>
               </div>
             </CardContent>
@@ -254,50 +319,90 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                   {showContext ? <ChevronUpIcon className="w-4 h-4" /> : <ChevronDownIcon className="w-4 h-4" />}
                 </Button>
               </div>
-              {showContext && (
-                <div className="bg-background border border-border rounded-[var(--radius-control)] p-4 font-mono text-xs text-text-muted max-h-64 overflow-y-auto">
-                  <pre>{`// Context Pack: sample-checkout
-// Generated: 2026-11-25T14:30:00Z
-
-// SPEC
-Build a TypeScript checkout flow with:
-- Cart management (add/remove/update items)
-- Stripe payment integration
-- Order confirmation page
-
-// DECISIONS
-- Use @stripe/react-stripe-js for PaymentElement
-- Cart state in React Context + localStorage persistence
-- Server actions for order creation
-
-// FILE TREE
-src/
-  app/
-    checkout/
-      page.tsx (CheckoutPage)
-    order/
-      [id]/
-        page.tsx (OrderConfirmation)
-  components/
-    Cart.tsx (Cart)
-    PaymentForm.tsx (PaymentForm)
-  lib/
-    stripe.ts (stripe client)
-  hooks/
-    useCart.ts (useCart)
-
-// RECENT CHANGES
-- Added PaymentForm with Stripe Elements
-- Implemented useCart hook
-- Created order confirmation page
-
-// TEST RESULTS
-✓ TypeScript: pass
-✓ ESLint: pass
-✗ Vitest: 2 failing (PaymentForm mocks)
-✓ Build: pass
-✓ Secret Scan: pass`}</pre>
+              {contextError === "NEED_MODULE" && (
+                <EmptyState
+                  icon="alert"
+                  title="Engine modules missing"
+                  description="The selector, context, or ledger modules are not available."
+                />
+              )}
+              {contextError && contextError !== "NEED_MODULE" && (
+                <EmptyState
+                  icon="alert"
+                  title="Context pack failed"
+                  description={contextError}
+                />
+              )}
+              {contextLoading && (
+                <div className="flex items-center justify-center py-8">
+                  <LoaderIcon className="w-6 h-6 text-primary animate-spin" />
                 </div>
+              )}
+              {!contextLoading && pack && showContext && (
+                <>
+                  <div className="bg-background border border-border rounded-[var(--radius-control)] p-4 font-mono text-xs text-text-muted max-h-64 overflow-y-auto">
+                    <pre>{pack.text}</pre>
+                  </div>
+                  <div className="mt-4 space-y-2">
+                    <h4 className="font-semibold text-text-primary text-sm">Included</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {pack.included.map((id: string) => (
+                        <span
+                          key={id}
+                          className="text-xs bg-background border border-border px-2 py-1 rounded text-text-primary font-mono truncate max-w-[200px]"
+                        >
+                          {id}
+                          <span className="text-text-muted"> ({selection?.reasons?.[id] || "selected"})</span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  {pack.dropped.length > 0 && (
+                    <div className="mt-4 space-y-2">
+                      <h4 className="font-semibold text-text-primary text-sm">Dropped (budget limit)</h4>
+                      <div className="space-y-1">
+                         {pack.dropped.map((d: { id: string; reason: string }) => (
+                          <div
+                            key={d.id}
+                            className="flex items-start gap-2 p-3 bg-background border border-border rounded-[var(--radius-control)]"
+                          >
+                            <XIcon className="w-4 h-4 text-error flex-shrink-0 mt-0.5" />
+                            <div>
+                              <span className="font-medium text-text-primary text-xs font-mono">{d.id}</span>
+                              <p className="text-xs text-text-muted mt-1">{d.reason === "budget" ? "Cut by token budget (6000)" : d.reason}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {pack.doNotRePropose.length > 0 && (
+                    <div className="mt-4 space-y-2">
+                      <h4 className="font-semibold text-text-primary text-sm">Do Not Re-Propose</h4>
+                      <div className="space-y-1">
+                        {pack.doNotRePropose.map((dnp: string, i: number) => (
+                          <div
+                            key={i}
+                            className="p-3 bg-background border border-border rounded-[var(--radius-control)]"
+                          >
+                            <p className="text-xs text-text-muted">{dnp}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <div className="mt-2 flex items-center justify-between text-xs text-text-muted">
+                    <span>Tokens: {pack.tokenEstimate} / {pack.budget}</span>
+                    <span>Symbols: {pack.included.length} included, {pack.dropped.length} dropped</span>
+                  </div>
+                </>
+              )}
+              {!contextLoading && !pack && !contextError && showContext && (
+                <EmptyState
+                  icon="file"
+                  title="No context yet"
+                  description="Enter a task and select target files, then click Run task."
+                />
               )}
             </CardContent>
           </Card>
@@ -407,8 +512,14 @@ src/
           ) : symbolsByFile.length > 0 ? (
             symbolsByFile.map(([filePath, nodes], fileIndex) => (
               <div key={fileIndex} className="space-y-1">
-                <div className="px-2 py-1 text-xs text-text-muted font-mono uppercase tracking-wider">
+                <div
+                  className="px-2 py-1 text-xs text-text-muted font-mono uppercase tracking-wider cursor-pointer select-none"
+                  onClick={() => toggleTargetFile(filePath)}
+                >
                   {filePath}
+                  {selectedTargetFiles.includes(filePath) && (
+                    <span className="text-primary"> ✓</span>
+                  )}
                 </div>
                 {nodes.map((node, nodeIndex) => (
                   <button

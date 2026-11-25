@@ -18,8 +18,8 @@ export async function POST(
   }
 
   try {
-    const { detectStack } = await import("@/engine/modules/stack/index.ts");
-    const { getAdapter } = await import("@/engine/modules/adapters/index.ts");
+    const { detectStack } = await import("@/engine/modules/stack");
+    const { getAdapter } = await import("@/engine/modules/adapters");
 
     const stack = detectStack(projectPath);
     const primaryLanguage = stack.primaryLanguage;
