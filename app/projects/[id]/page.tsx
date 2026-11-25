@@ -83,6 +83,11 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
   const [ledger, setLedger] = useState<Ledger | null>(null);
   const [ledgerLoading, setLedgerLoading] = useState(false);
   const [ledgerError, setLedgerError] = useState<string | null>(null);
+  const [patches, setPatches] = useState<any[]>([]);
+  const [runLoading, setRunLoading] = useState(false);
+  const [runError, setRunError] = useState<string | null>(null);
+  const [requestsLeft, setRequestsLeft] = useState<number | null>(null);
+  const [requestsLimit, setRequestsLimit] = useState<number | null>(null);
 
   const requirementsList =
     ledger && ledger.requirements.length > 0 ? (
@@ -229,6 +234,33 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
       setContextError("Network error");
     } finally {
       setContextLoading(false);
+    }
+  }
+
+  async function runTask() {
+    if (!projectId || !task.trim()) return;
+    setRunLoading(true);
+    setRunError(null);
+    try {
+      const res = await fetch(`/api/projects/${projectId}/run`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ task, targetFiles: selectedTargetFiles }),
+      });
+      const data = await res.json();
+      if (data.error) {
+        setRunError(data.error);
+        return;
+      }
+      setPatches(data.patches ?? []);
+      if (data.requestsLeft !== undefined) {
+        setRequestsLeft(data.requestsLeft);
+        setRequestsLimit(data.requestsLimit ?? null);
+      }
+    } catch {
+      setRunError("Network error");
+    } finally {
+      setRunLoading(false);
     }
   }
 
@@ -422,20 +454,39 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                 className="font-mono text-sm"
               />
               <div className="flex items-center justify-between">
-                <p className="text-sm text-text-muted">
-                  {task.length} characters
-                </p>
+                <div className="flex flex-col gap-1">
+                  <p className="text-sm text-text-muted">
+                    {task.length} characters
+                  </p>
+                  {requestsLeft !== null && requestsLimit !== null && (
+                    <p className="text-xs text-text-muted">
+                      {requestsLeft} of {requestsLimit} requests left today
+                    </p>
+                  )}
+                  {runError && (
+                    <p className="text-xs text-error">{runError}</p>
+                  )}
+                </div>
                 <Button
                   size="lg"
-                  disabled={!task.trim() || contextLoading}
-                  onClick={runContext}
+                  disabled={
+                    !task.trim() ||
+                    contextLoading ||
+                    runLoading ||
+                    (requestsLeft !== null && requestsLeft <= 0)
+                  }
+                  onClick={runTask}
                 >
-                  {contextLoading ? (
+                  {runLoading ? (
                     <LoaderIcon className="w-4 h-4 mr-2 animate-spin" />
                   ) : (
                     <SparklesIcon className="w-4 h-4 mr-2" />
                   )}
-                  {contextLoading ? "Building context…" : "Run task"}
+                  {runLoading
+                    ? "Running…"
+                    : requestsLeft !== null && requestsLeft <= 0
+                      ? "Daily limit reached"
+                      : "Run task"}
                 </Button>
               </div>
             </CardContent>
@@ -553,15 +604,33 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                   <TabsTrigger value="ledger">Ledger</TabsTrigger>
                 </TabsList>
                 <TabsContent value="diff" className="flex-1 p-4 overflow-y-auto">
-                  <EmptyState
-                    icon="code"
-                    title="No diff yet"
-                    description="Run a task to see the proposed changes here."
-                  />
-                  {task && (
+                  {runError && (
+                    <EmptyState
+                      icon="alert"
+                      title="Run failed"
+                      description={runError}
+                    />
+                  )}
+                  {patches.length > 0 && (
+                    <div className="bg-background border border-border rounded-[var(--radius-control)] p-4 font-mono text-xs text-text-primary max-h-[400px] overflow-y-auto">
+                      <pre>
+                        {patches
+                          .map((p) => `--- a/${p.path}\n+++ b/${p.path}\n@@\n${p.newContent}`)
+                          .join("\n\n")}
+                      </pre>
+                    </div>
+                  )}
+                  {!patches.length && !runError && task && (
                     <div className="bg-background border border-border rounded-[var(--radius-control)] p-4 font-mono text-xs text-text-primary max-h-[400px] overflow-y-auto">
                       <pre>{mockDiff}</pre>
                     </div>
+                  )}
+                  {!task && (
+                    <EmptyState
+                      icon="code"
+                      title="No diff yet"
+                      description="Run a task to see the proposed changes here."
+                    />
                   )}
                 </TabsContent>
                 <TabsContent value="checks" className="flex-1 p-4 overflow-y-auto">
