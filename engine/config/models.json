@@ -1,0 +1,74 @@
+{
+  "_comment": "Model registry. Edit this file, never hardcode model IDs in code. Limits are per user per model per UTC day. Keep the sum of all globalDailyRequests below your OpenRouter account's daily free-model limit (50 under 10 credits, 1000 at 10 credits or more).",
+  "provider": "openrouter",
+  "baseUrl": "https://openrouter.ai/api/v1",
+  "apiKeyEnv": "OPENROUTER_API_KEY",
+  "accountDailyFreeRequests": 50,
+  "models": [
+    {
+      "modelId": "google/gemma-4-31b-it:free",
+      "chat": true,
+      "priority": 1,
+      "perUserDailyRequests": 10,
+      "perUserDailyTokens": 40000,
+      "globalDailyRequests": 20,
+      "status": "untested",
+      "notes": "Dense instruction-tuned model. Test JSON output before demo."
+    },
+    {
+      "modelId": "nvidia/nemotron-3.5-lightning:free",
+      "chat": true,
+      "priority": 2,
+      "perUserDailyRequests": 10,
+      "perUserDailyTokens": 40000,
+      "globalDailyRequests": 15,
+      "status": "ok",
+      "notes": "Confirm chat completions work and JSON output is clean."
+    },
+    {
+      "modelId": "google/gemma-4-26b-a4b-it:free",
+      "chat": true,
+      "priority": 3,
+      "perUserDailyRequests": 10,
+      "perUserDailyTokens": 40000,
+      "globalDailyRequests": 15,
+      "status": "ok",
+      "notes": "Mixture-of-experts model, usually faster per request."
+    },
+    {
+      "modelId": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+      "chat": true,
+      "priority": 4,
+      "perUserDailyRequests": 5,
+      "perUserDailyTokens": 40000,
+      "globalDailyRequests": 10,
+      "status": "ok",
+      "notes": "Reasoning model: may return extra thinking text. Check that the JSON patch still parses."
+    },
+    {
+      "modelId": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "chat": true,
+      "priority": 5,
+      "perUserDailyRequests": 5,
+      "perUserDailyTokens": 40000,
+      "globalDailyRequests": 10,
+      "status": "ok",
+      "notes": "Very large model. May be slow or queued. Use only as a last fallback unless tests show it is fast."
+    },
+    {
+      "modelId": "nvidia/nemotron-3.5-embed-1b:free",
+      "chat": false,
+      "notes": "Embedding model. Cannot generate code. Not used for chat routing."
+    },
+    {
+      "modelId": "nvidia/nemotron-3.5-embed-8b:free",
+      "chat": false,
+      "notes": "Embedding model. Cannot generate code. Not used for chat routing."
+    },
+    {
+      "modelId": "nvidia/nemotron-3-embed-1b:free",
+      "chat": false,
+      "notes": "Embedding model. Cannot generate code. Not used for chat routing."
+    }
+  ]
+}
