@@ -265,3 +265,8 @@ export const AlertTriangleIcon = createIcon([
   <line key="2" x1="12" y1="9" x2="12" y2="13" />,
   <line key="3" x1="12" y1="17" x2="12.01" y2="17" />,
 ]);
+
+export const ClockIcon = createIcon([
+  <circle key="1" cx="12" cy="12" r="10" />,
+  <polyline key="2" points="12 6 12 12 16 14" />,
+]);
