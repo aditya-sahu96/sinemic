@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { Ledger } from "@/engine/contracts";
 import { StepIndicator, STEPS, type StepId } from "@/components/ui/StepIndicator";
 import { Textarea, EmptyState, Tabs, TabsList, TabsTrigger, TabsContent, Card, CardContent, Button, Badge } from "@/components/ui";
 import { FileIcon, CodeIcon, SearchIcon, TerminalIcon, AlertCircleIcon, ChevronDownIcon, ChevronUpIcon, CheckIcon, XIcon, SparklesIcon, LoaderIcon } from "@/components/ui/icons";
@@ -65,14 +66,6 @@ const mockChecks = [
   { name: "Secret Scan", status: "pass", duration: "0.8s" },
 ];
 
-const mockLedger = [
-  { step: "Map", model: "Claude 3.5 Sonnet", tokens: 2847, time: "14:23" },
-  { step: "Describe", model: "GPT-4o", tokens: 5231, time: "14:25" },
-  { step: "Review", model: "Claude 3.5 Sonnet", tokens: 1923, time: "14:27" },
-  { step: "Check", model: "Gemini 1.5 Pro", tokens: 4102, time: "14:29" },
-  { step: "Approve", model: "Human", tokens: 0, time: "14:30" },
-];
-
 export default function ProjectWorkspacePage({ params }: { params: Promise<{ id: string }> }) {
   const [currentStep, setCurrentStep] = useState<StepId>("describe");
   const [task, setTask] = useState("");
@@ -87,6 +80,122 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
   const [selection, setSelection] = useState<any>(null);
   const [contextLoading, setContextLoading] = useState(false);
   const [contextError, setContextError] = useState<string | null>(null);
+  const [ledger, setLedger] = useState<Ledger | null>(null);
+  const [ledgerLoading, setLedgerLoading] = useState(false);
+  const [ledgerError, setLedgerError] = useState<string | null>(null);
+
+  const requirementsList =
+    ledger && ledger.requirements.length > 0 ? (
+      <div className="space-y-2">
+        {ledger.requirements.map((req) => (
+          <div
+            key={req.id}
+            className="p-3 bg-background border border-border rounded-[var(--radius-control)]"
+          >
+            <div className="flex items-center justify-between mb-1">
+              <span className="font-medium text-text-primary">{req.id}</span>
+              <Badge
+                variant={
+                  req.status === "verified"
+                    ? "verified"
+                    : req.status === "implemented"
+                      ? "implemented"
+                      : "proposed"
+                }
+                className="text-xs"
+              >
+                {req.status}
+              </Badge>
+            </div>
+            <p className="text-xs text-text-muted">{req.text}</p>
+            {req.acceptanceTests.length > 0 && (
+              <div className="mt-1 flex flex-wrap gap-1">
+                {req.acceptanceTests.map((at, i) => (
+                  <span
+                    key={i}
+                    className="text-[10px] bg-background border border-border px-2 py-0.5 rounded text-text-muted font-mono"
+                  >
+                    {at}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    ) : (
+      <EmptyState
+        icon="file"
+        title="No requirements"
+        description="Requirements appear here once seeded."
+      />
+    );
+
+  const decisionsList =
+    ledger && ledger.decisions.length > 0 ? (
+      <div className="space-y-2">
+        {ledger.decisions.map((d) => (
+          <div
+            key={d.id}
+            className="p-3 bg-background border border-border rounded-[var(--radius-control)]"
+          >
+            <div className="flex items-center justify-between mb-1">
+              <span className="font-medium text-text-primary">{d.id}</span>
+              <span className="text-xs text-text-muted">{d.createdAt.slice(0, 10)}</span>
+            </div>
+            <p className="text-xs text-text-muted mb-2">{d.chosen}</p>
+            <div className="mb-2">
+              <span className="text-[10px] text-text-muted">Rejected:</span>
+              <div className="flex flex-wrap gap-1 mt-1">
+                {d.rejected.map((r, i) => (
+                  <span
+                    key={i}
+                    className="text-[10px] bg-background border border-border px-2 py-0.5 rounded text-text-muted font-mono line-through"
+                  >
+                    {r}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <p className="text-xs text-text-primary">{d.reason}</p>
+          </div>
+        ))}
+      </div>
+    ) : (
+      <EmptyState
+        icon="file"
+        title="No decisions"
+        description="Decisions appear here once seeded."
+      />
+    );
+
+  const eventsList =
+    ledger && ledger.events.length > 0 ? (
+      <div className="space-y-1">
+        {ledger.events.map((e) => (
+          <div
+            key={e.id}
+            className="p-3 bg-background border border-border rounded-[var(--radius-control)]"
+          >
+            <div className="flex items-center justify-between mb-1">
+              <span className="font-medium text-text-primary">{e.type}</span>
+              <Badge variant="proposed" className="text-xs">
+                {e.actor}
+              </Badge>
+            </div>
+            <div className="flex items-center justify-between text-xs text-text-muted">
+              <span>{e.at.slice(0, 19).replace("T", " ")}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    ) : (
+      <EmptyState
+        icon="file"
+        title="No events"
+        description="Events appear here once seeded."
+      />
+    );
 
   function toggleTargetFile(filePath: string) {
     setSelectedTargetFiles((prev) =>
@@ -153,6 +262,31 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
       }
     }
     extract();
+    return () => { cancelled = true; };
+  }, [projectId]);
+
+  useEffect(() => {
+    if (!projectId) return;
+    let cancelled = false;
+    async function fetchLedger() {
+      try {
+        setLedgerLoading(true);
+        setLedgerError(null);
+        const res = await fetch(`/api/projects/${projectId}/ledger`);
+        if (!res.ok) {
+          const data = await res.json();
+          setLedgerError(data.error || "Ledger load failed");
+          return;
+        }
+        const data = await res.json();
+        if (!cancelled) setLedger(data.ledger);
+      } catch {
+        if (!cancelled) setLedgerError("Network error");
+      } finally {
+        if (!cancelled) setLedgerLoading(false);
+      }
+    }
+    fetchLedger();
     return () => { cancelled = true; };
   }, [projectId]);
 
@@ -458,29 +592,52 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                   )}
                 </TabsContent>
                 <TabsContent value="ledger" className="flex-1 p-4 overflow-y-auto">
-                  <EmptyState
-                    icon="database"
-                    title="No ledger entries"
-                    description="Run a task to see the execution ledger."
-                  />
-                  {task && (
-                    <div className="space-y-2">
-                      {mockLedger.map((entry, index) => (
-                        <div
-                          key={index}
-                          className="p-3 bg-background border border-border rounded-[var(--radius-control)]"
-                        >
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="font-medium text-text-primary">{entry.step}</span>
-                            <Badge variant="implemented" className="text-xs">{entry.model}</Badge>
-                          </div>
-                          <div className="flex items-center justify-between text-xs text-text-muted">
-                            <span>Tokens: {entry.tokens.toLocaleString()}</span>
-                            <span>{entry.time}</span>
-                          </div>
-                        </div>
-                      ))}
+                  {ledgerError && (
+                    <EmptyState
+                      icon="alert"
+                      title="Ledger load failed"
+                      description={ledgerError}
+                    />
+                  )}
+                  {ledgerLoading && (
+                    <div className="flex items-center justify-center py-8">
+                      <LoaderIcon className="w-6 h-6 text-primary animate-spin" />
                     </div>
+                  )}
+                  {!ledgerLoading && !ledgerError && ledger && (
+                    <div className="space-y-4">
+                      <div>
+                        <h4 className="font-semibold text-text-primary text-sm mb-2">
+                          Requirements
+                        </h4>
+                        <div className="space-y-2">
+                          {requirementsList}
+                        </div>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-text-primary text-sm mb-2">
+                          Decisions
+                        </h4>
+                        <div className="space-y-2">
+                          {decisionsList}
+                        </div>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-text-primary text-sm mb-2">
+                          Events
+                        </h4>
+                        <div className="space-y-1">
+                          {eventsList}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {!ledgerLoading && !ledger && !ledgerError && (
+                    <EmptyState
+                      icon="database"
+                      title="No ledger yet"
+                      description="Load the project to see the ledger."
+                    />
                   )}
                 </TabsContent>
               </Tabs>
