@@ -68,6 +68,14 @@ const mockChecks = [
 ];
 
 export default function ProjectWorkspacePage({ params }: { params: Promise<{ id: string }> }) {
+  return (
+    <ToastProvider>
+      <ProjectWorkspacePageInner params={params} />
+    </ToastProvider>
+  );
+}
+
+function ProjectWorkspacePageInner({ params }: { params: Promise<{ id: string }> }) {
   const [currentStep, setCurrentStep] = useState<StepId>("describe");
   const [task, setTask] = useState("");
   const [activeTab, setActiveTab] = useState("diff");
@@ -411,8 +419,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
   }
 
   return (
-    <ToastProvider>
-      <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background">
         <FirstVisitTour />
         <div className="border-b border-border bg-surface/50 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 py-4">
@@ -822,8 +829,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
           </Card>
         </aside>
       </div>
-    </div>
-    {/* Mobile Files Drawer */}
+      {/* Mobile Files Drawer */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-surface border-t border-border p-4 max-h-[60vh] overflow-y-auto">
         <h3 className="font-semibold text-text-primary mb-3">Files & Symbols</h3>
         <div className="space-y-1">
@@ -876,7 +882,7 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
           )}
         </div>
       </div>
-    </ToastProvider>
+    </div>
   );
 }
 
