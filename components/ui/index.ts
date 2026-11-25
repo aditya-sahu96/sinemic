@@ -17,4 +17,6 @@ export type { EmptyStateIcon } from "./EmptyState";
 
 export { Input, Textarea } from "./Input";
 
+export { Tabs, TabsList, TabsTrigger, TabsContent } from "./Tabs";
+
 export * from "./icons";

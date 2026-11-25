@@ -52,6 +52,10 @@ export const ChevronDownIcon = createIcon([
   <polyline key="1" points="6 9 12 15 18 9" />,
 ]);
 
+export const ChevronUpIcon = createIcon([
+  <polyline key="1" points="18 15 12 9 6 15" />,
+]);
+
 export const ChevronRightIcon = createIcon([
   <polyline key="1" points="9 18 15 12 9 6" />,
 ]);
