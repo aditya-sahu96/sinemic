@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { Ledger } from "@/engine/contracts";
+import type { CheckResult } from "@/engine/contracts/types";
 import { StepIndicator, STEPS, type StepId } from "@/components/ui/StepIndicator";
 import { Textarea, EmptyState, Tabs, TabsList, TabsTrigger, TabsContent, Card, CardContent, Button, Badge } from "@/components/ui";
 import { FileIcon, CodeIcon, SearchIcon, TerminalIcon, AlertCircleIcon, ChevronDownIcon, ChevronUpIcon, CheckIcon, XIcon, SparklesIcon, LoaderIcon } from "@/components/ui/icons";
@@ -86,6 +87,9 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
   const [patches, setPatches] = useState<any[]>([]);
   const [runLoading, setRunLoading] = useState(false);
   const [runError, setRunError] = useState<string | null>(null);
+  const [verifyResults, setVerifyResults] = useState<CheckResult[] | null>(null);
+  const [verifyLoading, setVerifyLoading] = useState(false);
+  const [verifyError, setVerifyError] = useState<string | null>(null);
   const [requestsLeft, setRequestsLeft] = useState<number | null>(null);
   const [requestsLimit, setRequestsLimit] = useState<number | null>(null);
 
@@ -241,6 +245,8 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
     if (!projectId || !task.trim()) return;
     setRunLoading(true);
     setRunError(null);
+    setVerifyResults(null);
+    setVerifyError(null);
     try {
       const res = await fetch(`/api/projects/${projectId}/run`, {
         method: "POST",
@@ -252,7 +258,36 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
         setRunError(data.error);
         return;
       }
-      setPatches(data.patches ?? []);
+      const patchesWithOld = await Promise.all(
+        (data.patches ?? []).map(async (p: any) => {
+          let oldContent = "";
+          try {
+            const fileRes = await fetch(
+              `/api/projects/${projectId}/file?path=${encodeURIComponent(p.path)}`
+            );
+            if (fileRes.ok) {
+              const fileData = await fileRes.json();
+              oldContent = fileData.content ?? "";
+            }
+          } catch {}
+          return { ...p, oldContent };
+        })
+      );
+      setPatches(patchesWithOld);
+      setCurrentStep("review");
+
+      const verifyRes = await fetch(`/api/projects/${projectId}/verify`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ patches: patchesWithOld }),
+      });
+      const verifyData = await verifyRes.json();
+      if (verifyData.error) {
+        setVerifyError(verifyData.error);
+      } else {
+        setVerifyResults(verifyData.checks ?? []);
+        setCurrentStep("check");
+      }
       if (data.requestsLeft !== undefined) {
         setRequestsLeft(data.requestsLeft);
         setRequestsLimit(data.requestsLimit ?? null);
@@ -612,12 +647,27 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                     />
                   )}
                   {patches.length > 0 && (
-                    <div className="bg-background border border-border rounded-[var(--radius-control)] p-4 font-mono text-xs text-text-primary max-h-[400px] overflow-y-auto">
-                      <pre>
-                        {patches
-                          .map((p) => `--- a/${p.path}\n+++ b/${p.path}\n@@\n${p.newContent}`)
-                          .join("\n\n")}
-                      </pre>
+                    <div className="bg-background border border-border rounded-[var(--radius-control)] p-0 max-h-[400px] overflow-y-auto">
+                      {patches.map((p) => (
+                        <div key={p.path} className="border-b border-border last:border-0">
+                          <div className="px-4 py-2 bg-surface text-xs font-mono text-text-muted border-b border-border">
+                            {p.path}
+                          </div>
+                          <div className="px-4 py-2 font-mono text-xs">
+                            {simpleDiff(p.oldContent, p.newContent).map((line, i) => (
+                              <div
+                                key={i}
+                                className={`flex items-start gap-1 ${line.type === "add" ? "bg-success/10" : line.type === "remove" ? "bg-error/10" : ""}`}
+                              >
+                                <span className={`w-4 text-center select-none ${line.type === "add" ? "text-success" : line.type === "remove" ? "text-error" : "text-text-muted"}`}>
+                                  {line.type === "add" ? "+" : line.type === "remove" ? "-" : " "}
+                                </span>
+                                <span className="whitespace-pre break-all">{line.content.slice(2)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   )}
                   {!patches.length && !runError && task && (
@@ -634,32 +684,58 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
                   )}
                 </TabsContent>
                 <TabsContent value="checks" className="flex-1 p-4 overflow-y-auto">
-                  <EmptyState
-                    icon="terminal"
-                    title="No checks yet"
-                    description="Run a task to see verification results."
-                  />
-                  {task && (
+                  {verifyLoading && (
+                    <div className="flex items-center justify-center py-8">
+                      <LoaderIcon className="w-6 h-6 text-primary animate-spin" />
+                    </div>
+                  )}
+                  {verifyError && (
+                    <EmptyState
+                      icon="alert"
+                      title="Verify failed"
+                      description={verifyError}
+                    />
+                  )}
+                  {verifyResults && verifyResults.length > 0 && (
                     <div className="space-y-2">
-                      {mockChecks.map((check, index) => (
+                      {verifyResults.map((check) => (
                         <div
-                          key={index}
+                          key={check.name}
                           className="flex items-center justify-between p-3 bg-background border border-border rounded-[var(--radius-control)]"
                         >
                           <div className="flex items-center gap-3">
-                            {check.status === "pass" ? (
-                              <CheckIcon className="w-5 h-5 text-success" />
-                            ) : (
-                              <XIcon className="w-5 h-5 text-error" />
-                            )}
+                            <Badge
+                              variant={check.passed ? "passed" : check.skipped ? "skipped" : "failed"}
+                              className="text-xs"
+                            >
+                              {check.passed ? "Passed" : check.skipped ? "Skipped" : "Failed"}
+                            </Badge>
                             <span className="font-medium text-text-primary">{check.name}</span>
                           </div>
-                          <span className="text-sm text-text-muted font-mono">{check.duration}</span>
+                          <div className="flex items-center gap-2 text-xs text-text-muted font-mono">
+                            {check.durationMs !== undefined && <span>{check.durationMs}ms</span>}
+                            {check.skipped && <span>{check.skipReason}</span>}
+                          </div>
                         </div>
                       ))}
                     </div>
                   )}
+                  {!verifyResults && !verifyError && !verifyLoading && task && (
+                    <EmptyState
+                      icon="terminal"
+                      title="No checks yet"
+                      description="Run a task to see verification results."
+                    />
+                  )}
+                  {!task && (
+                    <EmptyState
+                      icon="terminal"
+                      title="No checks yet"
+                      description="Run a task to see verification results."
+                    />
+                  )}
                 </TabsContent>
+
                 <TabsContent value="ledger" className="flex-1 p-4 overflow-y-auto">
                   {ledgerError && (
                     <EmptyState
@@ -772,6 +848,29 @@ export default function ProjectWorkspacePage({ params }: { params: Promise<{ id:
   );
 }
 
+function simpleDiff(oldContent: string, newContent: string): { type: "add" | "remove" | "same"; content: string }[] {
+  const oldLines = oldContent.split("\n");
+  const newLines = newContent.split("\n");
+  const result: { type: "add" | "remove" | "same"; content: string }[] = [];
+  const maxLen = Math.max(oldLines.length, newLines.length);
+  for (let i = 0; i < maxLen; i++) {
+    const oldLine = oldLines[i];
+    const newLine = newLines[i];
+    if (oldLine === undefined) {
+      result.push({ type: "add", content: `+ ${newLine}` });
+    } else if (newLine === undefined) {
+      result.push({ type: "remove", content: `- ${oldLine}` });
+    } else if (oldLine === newLine) {
+      result.push({ type: "same", content: `  ${oldLine}` });
+    } else {
+      result.push({ type: "remove", content: `- ${oldLine}` });
+      result.push({ type: "add", content: `+ ${newLine}` });
+    }
+  }
+  return result;
+}
+
+
 function StepIndicatorMobile({ currentStep }: { currentStep: StepId }) {
   const currentIndex = STEPS.map((s) => s.id).indexOf(currentStep);
   const currentStepData = STEPS[currentIndex];
@@ -799,3 +898,5 @@ function StepIndicatorMobile({ currentStep }: { currentStep: StepId }) {
     </div>
   );
 }
+
+
