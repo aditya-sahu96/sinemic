@@ -1,26 +1,94 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-primary: #2563EB;
+  --color-primary-hover: #1D4ED8;
+  --color-accent: #0D9488;
+  --color-background: #F8FAFC;
+  --color-surface: #FFFFFF;
+  --color-text-primary: #0F172A;
+  --color-text-muted: #64748B;
+  --color-border: #E2E8F0;
+  --color-danger: #DC2626;
+  --color-warning: #D97706;
+  --color-success: #16A34A;
+
+  --font-heading: "Inter", sans-serif;
+  --font-body: "Inter", sans-serif;
+  --font-code: "JetBrains Mono", monospace;
+
+  --radius-card: 12px;
+  --radius-control: 8px;
+
+  --spacing-unit: 4px;
+  --space-1: calc(var(--spacing-unit) * 2);
+  --space-2: calc(var(--spacing-unit) * 4);
+  --space-3: calc(var(--spacing-unit) * 6);
+  --space-4: calc(var(--spacing-unit) * 8);
+  --space-6: calc(var(--spacing-unit) * 12);
+  --space-8: calc(var(--spacing-unit) * 16);
+  --space-12: calc(var(--spacing-unit) * 24);
+
+  --motion-duration: 200ms;
+  --motion-easing: ease-out;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-primary: var(--color-primary);
+  --color-primary-hover: var(--color-primary-hover);
+  --color-accent: var(--color-accent);
+  --color-background: var(--color-background);
+  --color-surface: var(--color-surface);
+  --color-text-primary: var(--color-text-primary);
+  --color-text-muted: var(--color-text-muted);
+  --color-border: var(--color-border);
+  --color-danger: var(--color-danger);
+  --color-warning: var(--color-warning);
+  --color-success: var(--color-success);
+
+  --font-heading: var(--font-heading);
+  --font-body: var(--font-body);
+  --font-code: var(--font-code);
+
+  --radius-card: var(--radius-card);
+  --radius-control: var(--radius-control);
+
+  --spacing-unit: var(--spacing-unit);
+
+  --animate-duration: var(--motion-duration);
+  --animate-easing: var(--motion-easing);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: var(--font-body);
+  color: var(--color-text-primary);
+  background: var(--color-background);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  min-height: 100vh;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+button:disabled,
+input:disabled,
+textarea:disabled,
+select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.transition-base {
+  transition: all var(--motion-duration) var(--motion-easing);
 }
