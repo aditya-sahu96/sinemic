@@ -132,6 +132,47 @@ export default function AboutPage() {
         </CardContent>
       </Card>
 
+      <Card className="space-y-6">
+        <CardContent className="space-y-4">
+          <h2 className="font-heading text-2xl font-medium tracking-tight text-text-heading">What works today</h2>
+          <p className="text-text-body leading-relaxed">
+            Round 2 prototype scope. These features are implemented and tested in this build.
+          </p>
+          <ul className="list-disc list-inside space-y-3 text-text-body leading-relaxed max-w-xl">
+            <li>Import a public GitHub repository (sample TypeScript checkout included)</li>
+            <li>Map project structure — functions, imports, calls — per language</li>
+            <li>Build a context pack for each task (specs, decisions, file tree, recent changes)</li>
+            <li>Run a task through free models with fallback and per-user daily limits</li>
+            <li>Verify: static checks only (type check + secret scan; tests are skipped on imported projects)</li>
+            <li>Approve verified patches and write them to the project</li>
+            <li>View a per-file diff and a checks panel (passed / failed / skipped)</li>
+            <li>Ledger of requirements, decisions, and events</li>
+            <li>Export project as zip and export unified diff</li>
+            <li>Loading, empty, and error states everywhere</li>
+            <li>Keyboard: Enter runs a task, Escape closes panels</li>
+          </ul>
+        </CardContent>
+      </Card>
+
+      <Card className="space-y-6">
+        <CardContent className="space-y-4">
+          <h2 className="font-heading text-2xl font-medium tracking-tight text-text-heading">Not built yet</h2>
+          <p className="text-text-body leading-relaxed">
+            Out of scope for round 2. These are planned for a later round.
+          </p>
+          <ul className="list-disc list-inside space-y-3 text-text-body leading-relaxed max-w-xl">
+            <li>User accounts / authentication — no accounts yet; projects are saved in this browser</li>
+            <li>Pull requests</li>
+            <li>Running tests on imported repositories — static checks only; test execution is not implemented</li>
+            <li>Isolated worker / background processing</li>
+            <li>Python and Go live checks (TypeScript only on the public demo)</li>
+            <li>Skills, MCP, CLI</li>
+            <li>Billing, teams</li>
+            <li>Production security audit</li>
+          </ul>
+        </CardContent>
+      </Card>
+
       <section className="space-y-6 pt-8 border-t border-border">
         <h2 className="font-heading text-2xl font-medium tracking-tight text-text-heading">Next steps</h2>
           <div className="flex flex-col sm:flex-row gap-4">
