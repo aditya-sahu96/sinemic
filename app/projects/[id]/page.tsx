@@ -94,6 +94,7 @@ function ProjectWorkspacePageInner({ params }: { params: Promise<{ id: string }>
   const [requestsLeft, setRequestsLeft] = useState<number | null>(null);
   const [requestsLimit, setRequestsLimit] = useState<number | null>(null);
   const [showMobileDrawer, setShowMobileDrawer] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
 
   const { addToast } = useToast();
 
@@ -279,6 +280,61 @@ function ProjectWorkspacePageInner({ params }: { params: Promise<{ id: string }>
       setRunLoading(false);
     }
   }, [projectId, task, selectedTargetFiles, addToast]);
+
+  const downloadZip = useCallback(async () => {
+    if (!projectId) return;
+    setExportLoading(true);
+    try {
+      const res = await fetch(`/api/projects/${projectId}/export`);
+      if (!res.ok) {
+        const data = await res.json();
+        addToast({ type: "error", title: "Export failed", message: data.error || "Unknown error" });
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `sinemic-${projectId}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      addToast({ type: "success", title: "Export complete", message: "Project downloaded as zip" });
+    } catch {
+      addToast({ type: "error", title: "Export failed", message: "Network error downloading zip" });
+    } finally {
+      setExportLoading(false);
+    }
+  }, [projectId, addToast]);
+
+  const downloadDiff = useCallback(async () => {
+    if (!projectId) return;
+    setExportLoading(true);
+    try {
+      const res = await fetch(`/api/projects/${projectId}/diff`);
+      if (!res.ok) {
+        const data = await res.json();
+        addToast({ type: "error", title: "Diff failed", message: data.error || "Unknown error" });
+        return;
+      }
+      const text = await res.text();
+      const blob = new Blob([text], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `sinemic-${projectId}.diff`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      addToast({ type: "success", title: "Diff saved", message: "Unified diff downloaded" });
+    } catch {
+      addToast({ type: "error", title: "Diff failed", message: "Network error downloading diff" });
+    } finally {
+      setExportLoading(false);
+    }
+  }, [projectId, addToast]);
 
   useEffect(() => {
     params.then((p) => setProjectId(p.id));
@@ -659,6 +715,33 @@ function ProjectWorkspacePageInner({ params }: { params: Promise<{ id: string }>
                   <TabsTrigger value="ledger">Ledger</TabsTrigger>
                 </TabsList>
                 <TabsContent value="diff" className="flex-1 p-4 overflow-y-auto">
+                  <div className="flex gap-2 mb-3">
+                    <Button
+                      size="sm"
+                      disabled={exportLoading || patches.length === 0}
+                      onClick={downloadZip}
+                    >
+                      {exportLoading ? (
+                        <LoaderIcon className="w-3 h-3 mr-2 animate-spin" />
+                      ) : (
+                        <FileIcon className="w-3 h-3 mr-2" />
+                      )}
+                      Download zip
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      disabled={exportLoading || patches.length === 0}
+                      onClick={downloadDiff}
+                    >
+                      {exportLoading ? (
+                        <LoaderIcon className="w-3 h-3 mr-2 animate-spin" />
+                      ) : (
+                        <CodeIcon className="w-3 h-3 mr-2" />
+                      )}
+                      Download .diff
+                    </Button>
+                  </div>
                   {runError && (
                     <EmptyState
                       icon="alert"
