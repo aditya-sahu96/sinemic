@@ -178,6 +178,7 @@ export const typescriptAdapter: LanguageAdapter = {
     return [
       { name: "typecheck", command: ["npx", "tsc", "--noEmit"], cwd: projectPath, timeoutMs: 120000 },
       { name: "test", command: ["npx", "vitest", "run"], cwd: projectPath, timeoutMs: 120000 },
+      { name: "parse", command: ["node", "-e", "process.exit(0)"], cwd: projectPath, timeoutMs: 30000 },
     ];
   },
 };

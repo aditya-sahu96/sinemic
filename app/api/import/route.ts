@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import crypto from "node:crypto";
+import fs from "node:fs";
 import path from "node:path";
 
 export const runtime = "nodejs";
 
 const PROJECTS_ROOT = "/tmp/sinemic/projects";
+const DATA_DIR = path.join(process.cwd(), "data", "projects");
 
 export async function POST(req: Request) {
   let body: { url?: string };
@@ -36,6 +38,24 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
     return NextResponse.json({ error: "Import failed." }, { status: 500 });
+  }
+
+  // Persist project under data/projects so verify/approve can find it,
+  // and mark it as an imported (non-executing checks) project.
+  try {
+    const dataProjectPath = path.join(DATA_DIR, id);
+    if (fs.existsSync(dataProjectPath)) {
+      fs.rmSync(dataProjectPath, { recursive: true, force: true });
+    }
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+    fs.cpSync(projectPath, dataProjectPath, { recursive: true });
+    fs.writeFileSync(
+      path.join(dataProjectPath, ".sinemic-meta.json"),
+      JSON.stringify({ source: "imported" }),
+      "utf8",
+    );
+  } catch {
+    return NextResponse.json({ error: "Failed to persist imported project" }, { status: 500 });
   }
 
   try {

@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
+import * as ts from "typescript";
 import type { CheckCommand, CheckResult, VerifyResult, FilePatch } from "../../contracts/types";
 
 export function applyPatches(projectPath: string, patches: FilePatch[], workDir: string): string {
@@ -73,5 +74,72 @@ export function secretScan(projectPath: string): CheckResult {
     skipped: false,
     durationMs,
     output: found ? `secrets found in: ${files.join(", ")}`.slice(0, 4000) : "no secrets found",
+  };
+}
+
+export function parseCheck(projectPath: string): CheckResult {
+  const start = Date.now();
+  let failed = false;
+  const errors: string[] = [];
+  const files: string[] = [];
+
+  function walk(dir: string) {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        if (entry.name === "node_modules" || entry.name === ".git") continue;
+        walk(full);
+      } else if (/\.(ts|tsx|js|jsx|mjs|cjs)$/.test(entry.name)) {
+        files.push(full);
+      }
+    }
+  }
+
+  try { walk(projectPath); } catch {}
+
+  const baseOptions: ts.TranspileOptions = {
+    compilerOptions: {
+      module: ts.ModuleKind.ESNext,
+      target: ts.ScriptTarget.ES2022,
+      strict: true,
+      esModuleInterop: true,
+      skipLibCheck: true,
+      allowJs: true,
+    },
+    reportDiagnostics: true,
+  };
+
+  for (const file of files) {
+    try {
+      const content = fs.readFileSync(file, "utf8");
+      const ext = path.extname(file).toLowerCase();
+      const options: ts.TranspileOptions = { ...baseOptions, fileName: file };
+      if (ext === ".tsx" || ext === ".jsx") {
+        options.compilerOptions!.jsx = ts.JsxEmit.Preserve;
+      }
+      const result = ts.transpileModule(content, options);
+      if (result.diagnostics && result.diagnostics.length > 0) {
+        failed = true;
+        for (const d of result.diagnostics) {
+          const line = d.file ? d.file.getLineAndCharacterOfPosition(d.start ?? 0).line + 1 : 0;
+          const msg = ts.flattenDiagnosticMessageText(d.messageText, " ");
+          errors.push(`${file}:${line}: ${msg}`);
+        }
+      }
+    } catch (e) {
+      failed = true;
+      errors.push(`${file}: ${String(e)}`);
+    }
+  }
+
+  const durationMs = Date.now() - start;
+  return {
+    name: "parse",
+    passed: !failed,
+    skipped: false,
+    durationMs,
+    output: failed
+      ? `parse errors in ${errors.length} file(s): ${errors.slice(0, 5).join("; ")}`.slice(0, 4000)
+      : `parsed ${files.length} file(s) successfully`,
   };
 }

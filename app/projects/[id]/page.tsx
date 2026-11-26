@@ -5,7 +5,7 @@ import type { Ledger } from "@/engine/contracts";
 import type { CheckResult, ContextPack, Selection, FilePatch } from "@/engine/contracts/types";
 import { StepIndicator, STEPS, type StepId } from "@/components/ui/StepIndicator";
 import { Textarea, EmptyState, Tabs, TabsList, TabsTrigger, TabsContent, Card, CardContent, Button, Badge, ToastProvider, useToast, FirstVisitTour } from "@/components/ui";
-import { FileIcon, CodeIcon, SearchIcon, ChevronDownIcon, ChevronUpIcon, XIcon, SparklesIcon, LoaderIcon } from "@/components/ui/icons";
+import { FileIcon, CodeIcon, SearchIcon, ChevronDownIcon, ChevronUpIcon, XIcon, SparklesIcon, LoaderIcon, InfoIcon } from "@/components/ui/icons";
 
 interface SymbolNode {
   id: string;
@@ -88,6 +88,7 @@ function ProjectWorkspacePageInner({ params }: { params: Promise<{ id: string }>
   const [runLoading, setRunLoading] = useState(false);
   const [runError, setRunError] = useState<string | null>(null);
   const [verifyResults, setVerifyResults] = useState<CheckResult[] | null>(null);
+  const [verifySource, setVerifySource] = useState<"imported" | "sample" | "demo" | null>(null);
   const [verifyLoading] = useState(false);
   const [verifyError, setVerifyError] = useState<string | null>(null);
   const [requestsLeft, setRequestsLeft] = useState<number | null>(null);
@@ -263,6 +264,7 @@ function ProjectWorkspacePageInner({ params }: { params: Promise<{ id: string }>
         addToast({ type: "error", title: "Verification failed", message: verifyData.error || "Unknown error" });
       } else {
         setVerifyResults(verifyData.checks ?? []);
+        setVerifySource(verifyData.source ?? null);
         setCurrentStep("check");
         addToast({ type: "success", title: "Verification complete", message: `All checks finished` });
       }
@@ -713,6 +715,22 @@ function ProjectWorkspacePageInner({ params }: { params: Promise<{ id: string }>
                       title="Verify failed"
                       description={verifyError}
                     />
+                  )}
+                  {verifySource === "imported" && (
+                    <Card className="mb-4 border border-border bg-info">
+                      <CardContent className="p-3">
+                        <div className="flex items-start gap-2">
+                          <InfoIcon className="w-4 h-4 mt-0.5 text-info-foreground" />
+                          <div>
+                            <p className="font-medium text-text-heading text-xs">Static checks only</p>
+                            <p className="text-xs text-text-secondary mt-1">
+                              Imported projects run secret-scan + parse checks only. Typecheck and test
+                              are skipped — no code is executed.
+                            </p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
                   )}
                   {verifyResults && verifyResults.length > 0 && (
                     <div className="space-y-2">

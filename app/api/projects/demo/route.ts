@@ -30,6 +30,11 @@ export async function POST() {
 
   try {
     copyRecursive(SAMPLE_REPO, projectPath);
+    fs.writeFileSync(
+      path.join(projectPath, ".sinemic-meta.json"),
+      JSON.stringify({ source: "sample" }),
+      "utf8",
+    );
     return NextResponse.json({ id });
   } catch {
     return NextResponse.json({ error: "Failed to create demo project" }, { status: 500 });

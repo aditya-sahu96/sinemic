@@ -41,10 +41,30 @@ export async function POST(
       return NextResponse.json({ error: "No verify event found. Run verify first." }, { status: 400 });
     }
 
-    const latestVerify = verifyEvents[verifyEvents.length - 1] as { payload: { passed: boolean; patches: { path: string; newContent: string }[] } };
+    const latestVerify = verifyEvents[verifyEvents.length - 1] as { payload: { passed: boolean; checks: Array<{ name: string; passed: boolean; skipped: boolean }>; patches: { path: string; newContent: string }[]; source?: string } };
     if (!latestVerify.payload.passed) {
       store.close();
       return NextResponse.json({ error: "Latest verify did not pass" }, { status: 400 });
+    }
+
+    const checks = latestVerify.payload.checks ?? [];
+    const secretScanResult = checks.find((c) => c.name === "secret-scan");
+    const parseResult = checks.find((c) => c.name === "parse");
+    const ranAtLeastOne = checks.some((c) => !c.skipped);
+
+    if (!secretScanResult || !secretScanResult.passed) {
+      store.close();
+      return NextResponse.json({ error: "Secret scan did not pass" }, { status: 400 });
+    }
+
+    if (!parseResult || !parseResult.passed) {
+      store.close();
+      return NextResponse.json({ error: "Parse check did not pass" }, { status: 400 });
+    }
+
+    if (!ranAtLeastOne) {
+      store.close();
+      return NextResponse.json({ error: "No checks ran during verify" }, { status: 400 });
     }
 
     // Check patches match exactly

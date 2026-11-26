@@ -152,7 +152,7 @@ export interface UsageLimits {
 // ---------- Verification ----------
 
 export interface CheckCommand {
-  name: "typecheck" | "test" | "build" | "secret-scan";
+  name: "typecheck" | "test" | "build" | "secret-scan" | "parse";
   command: string[];                     // argv array, never a shell string
   cwd: string;
   timeoutMs: number;
