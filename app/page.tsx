@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Button, Card, CardContent, ArrowRightIcon, SparklesIcon, ShieldIcon, DatabaseIcon } from "@/components/ui";
+import { Button, Card, CardContent, SparklesIcon, ShieldIcon, DatabaseIcon, Reveal } from "@/components/ui";
 
 const features = [
   {
@@ -22,55 +22,90 @@ const features = [
 export default function LandingPage() {
   return (
     <div className="min-h-screen">
-      <section className="py-20 px-4 max-w-7xl mx-auto text-center">
-        <div className="max-w-3xl mx-auto space-y-8">
-          <span className="inline-block px-3 py-1 text-xs font-medium bg-primary/10 text-primary rounded-[var(--radius-control)]">
-            Prototype
-          </span>
-          <h1 className="text-4xl md:text-5xl font-bold text-text-primary leading-tight font-heading">
-            Build with any AI. Keep the project&apos;s memory. Verify every change.
-          </h1>
-          <p className="text-lg text-text-muted max-w-2xl mx-auto">
-            AI-built projects lose context when you switch models, say "done" without proof, and skip basics like validation and secrets.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-            <Link href="/projects" className="inline-flex items-center justify-center font-medium transition-base rounded-[var(--radius-control)] min-h-[40px] px-6 py-3 text-lg bg-primary text-white hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
-              Try the demo
-            </Link>
-            <Link href="/about" className="inline-flex items-center justify-center font-medium transition-base rounded-[var(--radius-control)] min-h-[40px] px-6 py-3 text-lg bg-surface text-text-primary border border-border hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
-              Learn more
-            </Link>
-          </div>
+      {/* Hero */}
+      <section className="relative pt-32 pb-24 px-6">
+        <div className="max-w-5xl mx-auto text-center">
+          <Reveal delay={80}>
+            <h1 className="font-heading text-3xl md:text-4xl lg:text-5xl font-normal tracking-[-0.03em] leading-[0.95] text-text-heading">
+              Build with any AI.
+              <br />
+              <span className="text-text-secondary">Keep the project&apos;s memory.</span>
+              <br />
+              Verify every change.
+            </h1>
+          </Reveal>
+          <Reveal delay={160}>
+            <p className="mt-8 text-base md:text-lg text-text-secondary max-w-2xl mx-auto leading-relaxed">
+              AI-built projects lose context when you switch models, say &quot;done&quot; without proof, and skip basics like validation and secrets.
+            </p>
+          </Reveal>
+          <Reveal delay={240}>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-10">
+              <Link href="/projects">
+                <Button size="lg">Try the demo</Button>
+              </Link>
+              <Link href="/about">
+                <Button variant="secondary" size="lg">Learn more</Button>
+              </Link>
+            </div>
+          </Reveal>
         </div>
       </section>
 
-      <section className="py-20 px-4 bg-background">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-3xl font-bold text-text-primary text-center mb-12 font-heading">How it works</h2>
+      {/* Divider glow */}
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+      </div>
+
+      {/* How it works */}
+      <section className="py-32 px-6">
+        <div className="max-w-6xl mx-auto">
+          <Reveal>
+            <div className="text-center mb-20">
+              <p className="text-[10px] uppercase tracking-[0.25em] text-text-muted mb-4">How it works</p>
+              <h2 className="font-heading text-3xl md:text-5xl font-normal tracking-tight text-text-heading">
+                Memory, verification, and model-agnostic execution.
+              </h2>
+              <p className="text-text-secondary max-w-2xl mx-auto mt-6 leading-relaxed">
+                Every task runs through context packs, verification gates, and automatic model fallback before you approve.
+              </p>
+            </div>
+          </Reveal>
           <div className="grid md:grid-cols-3 gap-6">
-            {features.map((feature, index) => (
-              <Card key={feature.title} className="h-full">
-                <CardContent className="space-y-4">
-                  <div className="w-12 h-12 bg-primary/10 text-primary rounded-[var(--radius-control)] flex items-center justify-center" aria-hidden="true">
-                    <feature.icon className="w-6 h-6" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-text-primary font-heading">{feature.title}</h3>
-                  <p className="text-text-muted">{feature.description}</p>
-                </CardContent>
-              </Card>
+            {features.map((feature, i) => (
+              <Reveal key={feature.title} delay={i * 100}>
+                <Card className="h-full">
+                  <CardContent className="space-y-5">
+                    <div className="w-10 h-10 rounded-full border border-border flex items-center justify-center text-text-secondary" aria-hidden="true">
+                      <feature.icon className="w-5 h-5" />
+                    </div>
+                    <h3 className="font-heading text-xl font-medium text-text-heading tracking-tight">{feature.title}</h3>
+                    <p className="text-text-secondary leading-relaxed text-sm">{feature.description}</p>
+                  </CardContent>
+                </Card>
+              </Reveal>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="py-20 px-4 max-w-7xl mx-auto text-center">
-        <h2 className="text-3xl font-bold text-text-primary mb-6 font-heading">Ready to try it?</h2>
-        <p className="text-text-muted mb-8 max-w-2xl mx-auto">
-          Open the demo project and walk through the full flow: map, describe, review, check, approve.
-        </p>
-        <Link href="/projects" className="inline-flex items-center justify-center font-medium transition-base rounded-[var(--radius-control)] min-h-[40px] px-6 py-3 text-lg bg-primary text-white hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
-          Open demo project
-        </Link>
+      {/* CTA */}
+      <section className="py-32 px-6">
+        <Reveal>
+          <div className="max-w-3xl mx-auto text-center space-y-6">
+            <h2 className="font-heading text-3xl md:text-5xl font-normal tracking-tight text-text-heading">
+              Ready to try it?
+            </h2>
+            <p className="text-text-secondary max-w-xl mx-auto leading-relaxed">
+              Open the demo project and walk through the full flow: map, describe, review, check, approve.
+            </p>
+            <div className="pt-4">
+              <Link href="/projects">
+                <Button size="lg">Open demo project</Button>
+              </Link>
+            </div>
+          </div>
+        </Reveal>
       </section>
     </div>
   );

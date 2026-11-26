@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { XIcon, ChevronRightIcon, SparklesIcon, FileIcon, CodeIcon, CheckIcon } from "./icons";
+import { ChevronRightIcon } from "./icons";
 import { Button } from "./Button";
 
 const TOUR_KEY = "sinemic:first-visit-tour";
@@ -25,7 +25,7 @@ export function FirstVisitTour({ onComplete }: FirstVisitTourProps) {
     try {
       stored = localStorage.getItem(TOUR_KEY) === "1";
     } catch {}
-    if (stored) setDismissed(true);
+    if (stored) requestAnimationFrame(() => setDismissed(true));
   }, []);
 
   const step = TOUR_STEPS[stepIndex];
@@ -64,28 +64,28 @@ export function FirstVisitTour({ onComplete }: FirstVisitTourProps) {
         onClick={skip}
         aria-hidden="true"
       />
-      <div className="relative pointer-events-auto max-w-md w-full mx-4 bg-surface border border-border rounded-[var(--radius-card)] shadow-2xl overflow-hidden transition-base">
+      <div className="relative pointer-events-auto max-w-md w-full mx-4 bg-card border border-border rounded-[var(--radius-card)] backdrop-blur-[16px] shadow-2xl overflow-hidden transition-all duration-200">
         <div className="p-6">
           <div className="flex items-start gap-4">
-            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary text-white text-sm font-medium shrink-0 mt-0.5">
+            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-white text-[#080810] text-sm font-medium shrink-0 mt-0.5">
               {stepIndex + 1}
             </div>
             <div className="flex-1">
               <p className="text-xs text-text-muted uppercase tracking-wider font-medium">
                 Step {stepIndex + 1} of {TOUR_STEPS.length}
               </p>
-              <h3 className="font-semibold text-text-primary mt-1 mb-2">{step.title}</h3>
+              <h3 className="font-semibold text-text-heading mt-1 mb-2">{step.title}</h3>
               <p className="text-text-muted text-sm leading-relaxed">{step.description}</p>
             </div>
           </div>
         </div>
-        <div className="border-t border-border bg-surface/50 p-4 flex items-center justify-between">
+        <div className="border-t border-border bg-card/50 p-4 flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs text-text-muted font-medium">
             {TOUR_STEPS.map((s, i) => (
               <div
                 key={s.id}
-                className={`w-2 h-2 rounded-full transition-base ${
-                  i <= stepIndex ? "bg-primary" : "bg-border"
+                className={`w-2 h-2 rounded-full transition-all duration-200 ${
+                  i <= stepIndex ? "bg-white" : "bg-border"
                 }`}
                 aria-hidden="true"
               />

@@ -17,15 +17,15 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="w-full">
         {label && (
-          <label htmlFor={inputId} className="block text-sm font-medium text-text-primary mb-1.5">
+          <label htmlFor={inputId} className="block text-sm font-medium text-text-secondary mb-1.5">
             {label}
           </label>
         )}
         <input
           ref={ref}
           id={inputId}
-          className={`w-full px-3 py-2 bg-surface border rounded-[var(--radius-control)] text-text-primary placeholder-text-muted transition-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
-            error ? "border-danger focus-visible:ring-danger" : "border-border"
+          className={`w-full px-3 py-2 bg-card border rounded-[var(--radius-control)] text-text-body placeholder:text-text-muted transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+            error ? "border-danger focus-visible:ring-danger" : "border-border focus-visible:border-border-strong"
           } ${className}`}
           aria-invalid={error ? "true" : "false"}
           aria-describedby={error ? errorId : helperText ? helperId : undefined}
@@ -63,15 +63,15 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
     return (
       <div className="w-full">
         {label && (
-          <label htmlFor={textareaId} className="block text-sm font-medium text-text-primary mb-1.5">
+          <label htmlFor={textareaId} className="block text-sm font-medium text-text-secondary mb-1.5">
             {label}
           </label>
         )}
         <textarea
           ref={ref}
           id={textareaId}
-          className={`w-full px-3 py-2 bg-surface border rounded-[var(--radius-control)] text-text-primary placeholder-text-muted transition-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 resize-y min-h-[100px] ${
-            error ? "border-danger focus-visible:ring-danger" : "border-border"
+          className={`w-full px-3 py-2 bg-card border rounded-[var(--radius-control)] text-text-body placeholder:text-text-muted transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 focus-visible:ring-offset-2 focus-visible:ring-offset-background resize-y min-h-[100px] ${
+            error ? "border-danger focus-visible:ring-danger" : "border-border focus-visible:border-border-strong"
           } ${className}`}
           aria-invalid={error ? "true" : "false"}
           aria-describedby={error ? errorId : helperText ? helperId : undefined}

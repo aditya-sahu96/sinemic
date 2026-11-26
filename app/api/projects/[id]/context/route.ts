@@ -28,7 +28,7 @@ export async function POST(
     fs.mkdirSync(LEDGER_DIR, { recursive: true });
 
     const body: ContextRequest = await req.json();
-    const { task, targetFiles } = body;
+    const { targetFiles } = body;
 
     const { detectStack } = await import("@/engine/modules/stack");
     const { getAdapter } = await import("@/engine/modules/adapters");

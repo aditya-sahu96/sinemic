@@ -89,11 +89,11 @@ const TabsTrigger = forwardRef<HTMLButtonElement, TabsTriggerProps>(
         id={`${baseId}-trigger-${value}`}
         data-state={isActive ? "active" : "inactive"}
         className={cn(
-          "px-4 py-2 text-sm font-medium rounded-[var(--radius-control)] transition-base",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+          "px-4 py-2 text-sm font-medium rounded-[var(--radius-control)] transition-all duration-200",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           "disabled:opacity-50 disabled:cursor-not-allowed",
-          "data-[state=active]:bg-primary data-[state=active]:text-white",
-          "data-[state=inactive]:text-text-muted data-[state=inactive]:hover:text-text-primary data-[state=inactive]:hover:bg-background",
+          "data-[state=active]:bg-white data-[state=active]:text-background",
+          "data-[state=inactive]:text-text-muted data-[state=inactive]:hover:text-text-heading data-[state=inactive]:hover:bg-white/5",
           className
         )}
         disabled={disabled}

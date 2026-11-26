@@ -20,7 +20,7 @@ export async function verify(projectPath: string, checks: CheckCommand[]): Promi
   let passed = true;
   for (const c of checks) {
     const start = Date.now();
-    let skipped = false;
+    const skipped = false;
     let skipReason: string | undefined;
     let output = "";
     let ok = true;

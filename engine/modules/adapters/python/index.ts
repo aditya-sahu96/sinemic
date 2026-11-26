@@ -1,22 +1,27 @@
 import fs from "node:fs";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
-import type { LanguageAdapter, StackInfo, SymbolGraph, SymbolNode, SymbolEdge, CheckCommand, LanguageId } from "../../../contracts/types";
+import type { LanguageAdapter, StackInfo, SymbolGraph, SymbolNode, SymbolEdge, SymbolKind, EdgeKind, CheckCommand, LanguageId } from "../../../contracts/types";
 import { detectStack } from "../../stack";
 
 const scriptPath = path.join(__dirname, "extract_symbols.py");
 
-function runPython(projectPath: string): any {
+interface PythonRaw {
+  nodes: Array<{ id: string; name: string; kind: string; filePath: string; startLine: number; endLine: number; signature?: string }>;
+  edges: Array<{ from: string; to: string; kind: string; resolved: boolean }>;
+  coverage?: { filesParsed?: number; filesSkipped?: number; skippedReasons?: string[] };
+}
+
+function runPython(projectPath: string): PythonRaw {
   const candidates = process.platform === "win32" ? ["python", "python3"] : ["python3", "python"];
-  let lastErr: any = null;
+  let lastErr: Error | null = null;
   for (const bin of candidates) {
     try {
       const out = execFileSync(bin, [scriptPath, projectPath], { encoding: "utf8", timeout: 60000 });
       return JSON.parse(out);
-    } catch (e: any) {
-      lastErr = e;
-      if (e && e.code === "ENOENT") continue;
-      // if command exists but failed, still try next
+    } catch (e) {
+      lastErr = e instanceof Error ? e : new Error(String(e));
+      if (lastErr && lastErr.message.includes("ENOENT")) continue;
       continue;
     }
   }
@@ -34,19 +39,19 @@ export const pythonAdapter: LanguageAdapter = {
   },
   extract(projectPath: string): SymbolGraph {
     const raw = runPython(projectPath);
-    const nodes: SymbolNode[] = (raw.nodes || []).map((n: any) => ({
+    const nodes: SymbolNode[] = (raw.nodes || []).map((n) => ({
       id: n.id,
       name: n.name,
-      kind: n.kind,
+      kind: n.kind as SymbolKind,
       filePath: n.filePath,
       startLine: n.startLine,
       endLine: n.endLine,
       signature: n.signature,
     }));
-    const edges: SymbolEdge[] = (raw.edges || []).map((e: any) => ({
+    const edges: SymbolEdge[] = (raw.edges || []).map((e) => ({
       from: e.from,
       to: e.to,
-      kind: e.kind,
+      kind: e.kind as EdgeKind,
       resolved: !!e.resolved,
     }));
     return {

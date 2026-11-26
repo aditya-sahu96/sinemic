@@ -30,7 +30,7 @@ export function selectContext(graph: SymbolGraph, taskTargets: string[], maxSymb
   const ordered: string[] = [];
   const seen = new Set<string>();
 
-  function enqueue(id: string, reason: string, rank: number) {
+  function enqueue(id: string, reason: string) {
     if (seen.has(id)) return;
     if (!nodeById.has(id)) return;
     seen.add(id);
@@ -39,7 +39,7 @@ export function selectContext(graph: SymbolGraph, taskTargets: string[], maxSymb
   }
 
   // rank 0: targets
-  for (const id of targetIds) enqueue(id, "target", 0);
+  for (const id of targetIds) enqueue(id, "target");
 
   // rank 1: direct neighbours
   const rank1: string[] = [];
@@ -48,15 +48,7 @@ export function selectContext(graph: SymbolGraph, taskTargets: string[], maxSymb
     for (const c of rev.get(id) ?? []) if (nodeById.has(c) && !seen.has(c)) rank1.push(c);
   }
   for (const id of rank1) {
-    // determine reason
-    let reason = "related";
-    // if any target calls it
-    for (const t of targetIds) {
-      if ((adj.get(t) ?? new Set()).has(id)) reason = `called by target? actually callee of ${t}`.replace("called by target? actually callee of", "called by target?"); 
-    }
-    // simpler reason labels
-    reason = "direct neighbour";
-    enqueue(id, reason, 1);
+    enqueue(id, "direct neighbour");
   }
 
   // rank 2: neighbours of neighbours
@@ -65,7 +57,7 @@ export function selectContext(graph: SymbolGraph, taskTargets: string[], maxSymb
     for (const c of adj.get(id) ?? []) if (nodeById.has(c) && !seen.has(c)) rank2.push(c);
     for (const c of rev.get(id) ?? []) if (nodeById.has(c) && !seen.has(c)) rank2.push(c);
   }
-  for (const id of rank2) enqueue(id, "indirect neighbour", 2);
+  for (const id of rank2) enqueue(id, "indirect neighbour");
 
   // assign better reasons: recompute reasons based on relation to targets
   for (const id of ordered) {

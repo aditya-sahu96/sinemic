@@ -1,7 +1,6 @@
 "use client";
 
-import { HTMLAttributes, forwardRef } from "react";
-import { CheckIcon, ChevronRightIcon } from "./icons";
+import { CheckIcon } from "./icons";
 
 export const STEPS = [
   { id: "map", label: "Map" },
@@ -34,11 +33,11 @@ export function StepIndicator({ currentStep, className = "" }: StepIndicatorProp
           <div key={step.id} className="flex items-center">
             <div className="flex items-center gap-2">
               <div
-                className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium transition-base ${
+                className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium transition-all duration-200 ${
                   isCompleted
                     ? "bg-success text-white"
                     : isCurrent
-                    ? "bg-primary text-white"
+                    ? "bg-white text-[#080810]"
                     : "bg-background border border-border text-text-muted"
                 }`}
                 aria-current={isCurrent ? "step" : undefined}
@@ -47,7 +46,7 @@ export function StepIndicator({ currentStep, className = "" }: StepIndicatorProp
               </div>
               <span
                 className={`text-sm font-medium transition-base ${
-                  isCompleted || isCurrent ? "text-text-primary" : "text-text-muted"
+                  isCompleted || isCurrent ? "text-text-heading" : "text-text-muted"
                 }`}
               >
                 {step.label}
@@ -73,14 +72,14 @@ export function StepIndicatorMobile({ currentStep }: { currentStep: StepId }) {
   const currentStepData = STEPS[currentIndex];
 
   return (
-    <div className="md:hidden flex items-center justify-between p-4 bg-surface border border-border rounded-[var(--radius-card)]">
+    <div className="md:hidden flex items-center justify-between p-4 bg-card border border-border rounded-[var(--radius-card)] backdrop-blur-[16px]">
       <div className="flex items-center gap-3">
         <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-white text-sm font-medium">
           {currentIndex + 1}
         </div>
         <div>
           <p className="text-xs text-text-muted">Step {currentIndex + 1} of {STEPS.length}</p>
-          <p className="font-medium text-text-primary">{currentStepData.label}</p>
+          <p className="font-medium text-text-heading">{currentStepData.label}</p>
         </div>
       </div>
       <div className="flex items-center gap-1">

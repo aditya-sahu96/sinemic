@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { getAdapter } from "../index";
+import type { LanguageId } from "../../../contracts/types";
 
 describe("adapter registry", () => {
   it("returns typescript adapter for typescript and javascript", () => {
@@ -13,6 +14,6 @@ describe("adapter registry", () => {
     expect(getAdapter("go").id).toBe("go");
   });
   it("throws for unknown id", () => {
-    expect(() => getAdapter("rust" as any)).toThrow();
+    expect(() => getAdapter("rust" as unknown as LanguageId)).toThrow();
   });
 });

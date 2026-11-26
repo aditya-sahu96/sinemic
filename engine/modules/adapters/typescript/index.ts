@@ -26,7 +26,6 @@ export const typescriptAdapter: LanguageAdapter = {
     const configFile = ts.readConfigFile(configPath, ts.sys.readFile);
     const parsed = ts.parseJsonConfigFileContent(configFile.config, ts.sys, path.dirname(configPath));
     const program = ts.createProgram(parsed.fileNames, parsed.options);
-    const checker = program.getTypeChecker();
 
     const nodes: SymbolNode[] = [];
     const edges: SymbolEdge[] = [];

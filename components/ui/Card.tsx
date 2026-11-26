@@ -4,14 +4,18 @@ import { HTMLAttributes, forwardRef } from "react";
 
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
   padded?: boolean;
+  elevated?: boolean;
 }
 
 export const Card = forwardRef<HTMLDivElement, CardProps>(
-  ({ padded = true, className = "", children, ...props }, ref) => {
+  ({ padded = true, elevated = false, className = "", children, ...props }, ref) => {
+    const bgClass = elevated ? "bg-card-elevated" : "bg-card";
+    const ringClass = elevated ? "ring-1 ring-border-strong" : "border border-border";
+
     return (
       <div
         ref={ref}
-        className={`bg-surface border border-border rounded-[var(--radius-card)] transition-base ${padded ? "p-6" : ""} ${className}`}
+        className={`rounded-[var(--radius-card)] transition-all duration-300 ease-out backdrop-blur-[16px] hover:-translate-y-1 hover:border-border-strong ${bgClass} ${ringClass} ${padded ? "p-6" : ""} ${className}`}
         {...props}
       >
         {children}
@@ -34,7 +38,7 @@ CardHeader.displayName = "CardHeader";
 
 export const CardTitle = forwardRef<HTMLHeadingElement, HTMLAttributes<HTMLHeadingElement>>(
   ({ className = "", children, ...props }, ref) => (
-    <h3 ref={ref} className={`text-xl font-semibold text-text-primary ${className}`} {...props}>
+    <h3 ref={ref} className={`text-lg font-medium text-text-heading tracking-tight ${className}`} {...props}>
       {children}
     </h3>
   )
@@ -44,7 +48,7 @@ CardTitle.displayName = "CardTitle";
 
 export const CardDescription = forwardRef<HTMLParagraphElement, HTMLAttributes<HTMLParagraphElement>>(
   ({ className = "", children, ...props }, ref) => (
-    <p ref={ref} className={`text-text-muted mt-1 ${className}`} {...props}>
+    <p ref={ref} className={`text-text-secondary mt-1 ${className}`} {...props}>
       {children}
     </p>
   )

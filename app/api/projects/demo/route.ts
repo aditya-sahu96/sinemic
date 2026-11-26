@@ -31,7 +31,7 @@ export async function POST() {
   try {
     copyRecursive(SAMPLE_REPO, projectPath);
     return NextResponse.json({ id });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Failed to create demo project" }, { status: 500 });
   }
 }

@@ -1,12 +1,18 @@
 import fs from "node:fs";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
-import type { LanguageAdapter, StackInfo, SymbolGraph, SymbolNode, SymbolEdge, CheckCommand, LanguageId } from "../../../contracts/types";
+import type { LanguageAdapter, StackInfo, SymbolGraph, SymbolNode, SymbolEdge, SymbolKind, EdgeKind, CheckCommand, LanguageId } from "../../../contracts/types";
 import { detectStack } from "../../stack";
 
 const helperPath = path.join(__dirname, "helper", "main.go");
 
-function runGo(projectPath: string): any {
+interface GoRaw {
+  nodes: Array<{ id: string; name: string; kind: string; filePath: string; startLine: number; endLine: number }>;
+  edges: Array<{ from: string; to: string; kind: string; resolved: boolean }>;
+  coverage?: { filesParsed?: number; filesSkipped?: number; skippedReasons?: string[] };
+}
+
+function runGo(projectPath: string): GoRaw {
   const out = execFileSync("go", ["run", helperPath, projectPath], { encoding: "utf8", timeout: 120000 });
   return JSON.parse(out);
 }
@@ -19,18 +25,18 @@ export const goAdapter: LanguageAdapter = {
   },
   extract(projectPath: string): SymbolGraph {
     const raw = runGo(projectPath);
-    const nodes: SymbolNode[] = (raw.nodes || []).map((n: any) => ({
+    const nodes: SymbolNode[] = (raw.nodes || []).map((n) => ({
       id: n.id,
       name: n.name,
-      kind: n.kind,
+      kind: n.kind as SymbolKind,
       filePath: n.filePath,
       startLine: n.startLine,
       endLine: n.endLine,
     }));
-    const edges: SymbolEdge[] = (raw.edges || []).map((e: any) => ({
+    const edges: SymbolEdge[] = (raw.edges || []).map((e) => ({
       from: e.from,
       to: e.to,
-      kind: e.kind,
+      kind: e.kind as EdgeKind,
       resolved: !!e.resolved,
     }));
     return {

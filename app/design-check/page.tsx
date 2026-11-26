@@ -10,7 +10,6 @@ import {
   CardContent,
   CardFooter,
   Badge,
-  Toast,
   ToastContainer,
   StepIndicator,
   StepIndicatorMobile,
@@ -40,11 +39,11 @@ export default function DesignCheckPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background py-8 px-4">
-      <div className="max-w-4xl mx-auto space-y-8">
+    <div className="min-h-screen bg-background py-8 px-4 max-w-4xl mx-auto">
+      <div className="space-y-8">
         <header className="text-center">
-          <h1 className="text-3xl font-bold text-text-primary mb-2">Design System Check</h1>
-          <p className="text-text-muted">Review all components in one place</p>
+          <h1 className="text-3xl font-bold text-text-heading font-heading mb-2">Design System Check</h1>
+          <p className="text-text-secondary font-body">Review all components in one place</p>
         </header>
 
         <Card>
@@ -96,7 +95,7 @@ export default function DesignCheckPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card elevated>
           <CardHeader>
             <CardTitle>Cards</CardTitle>
             <CardDescription>Surface color, border, radius, padding 24px</CardDescription>
@@ -108,7 +107,7 @@ export default function DesignCheckPage() {
                 <CardDescription>Card description goes here</CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-text-muted">Card content with some text to show the padding and styling.</p>
+                <p className="text-text-body">Card content with some text to show the padding and styling.</p>
               </CardContent>
               <CardFooter>
                 <Button variant="secondary" size="sm">Cancel</Button>
@@ -116,7 +115,7 @@ export default function DesignCheckPage() {
               </CardFooter>
             </Card>
             <Card padded={false} className="p-4">
-              <p className="text-text-muted">Card without default padding (padded={false})</p>
+              <p className="text-text-body">Card without default padding (padded={false})</p>
             </Card>
           </CardContent>
         </Card>
@@ -230,54 +229,54 @@ export default function DesignCheckPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card elevated>
           <CardHeader>
             <CardTitle>Typography & Colors</CardTitle>
             <CardDescription>Design tokens applied</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <h1 className="text-4xl font-bold text-text-primary font-heading">Heading 1 (Inter)</h1>
-              <h2 className="text-3xl font-semibold text-text-primary font-heading">Heading 2</h2>
-              <h3 className="text-2xl font-semibold text-text-primary font-heading">Heading 3</h3>
-              <p className="text-base text-text-primary font-body">Body text (Inter) - This is regular paragraph text.</p>
-              <p className="text-sm text-text-muted font-body">Muted text</p>
-              <code className="font-code text-sm bg-background px-1.5 py-0.5 rounded">font-code (JetBrains Mono)</code>
+              <h1 className="text-4xl font-bold text-text-heading font-heading">Heading 1 (Manrope)</h1>
+              <h2 className="text-3xl font-semibold text-text-heading font-heading">Heading 2</h2>
+              <h3 className="text-2xl font-semibold text-text-heading font-heading">Heading 3</h3>
+              <p className="text-base text-text-body font-body">Body text (Inter) - This is regular paragraph text.</p>
+              <p className="text-sm text-text-secondary font-body">Muted text</p>
+              <code className="font-code text-sm bg-card border border-border px-1.5 py-0.5 rounded-[var(--radius-control)]">font-code (JetBrains Mono)</code>
             </div>
             <div className="flex flex-wrap gap-3">
-              <div className="w-16 h-16 rounded-[var(--radius-control)] bg-primary" title="Primary: #2563EB" />
-              <div className="w-16 h-16 rounded-[var(--radius-control)] bg-accent" title="Accent: #0D9488" />
-              <div className="w-16 h-16 rounded-[var(--radius-control)] bg-success" title="Success: #16A34A" />
-              <div className="w-16 h-16 rounded-[var(--radius-control)] bg-warning" title="Warning: #D97706" />
-              <div className="w-16 h-16 rounded-[var(--radius-control)] bg-danger" title="Danger: #DC2626" />
-              <div className="w-16 h-16 rounded-[var(--radius-control)] bg-surface border border-border" title="Surface: #FFFFFF" />
-              <div className="w-16 h-16 rounded-[var(--radius-control)] bg-background border border-border" title="Background: #F8FAFC" />
+              <div className="w-16 h-16 rounded-[var(--radius-control)] bg-primary" title="Primary: var(--color-primary)" />
+              <div className="w-16 h-16 rounded-[var(--radius-control)] bg-accent" title="Accent: var(--color-accent)" />
+              <div className="w-16 h-16 rounded-[var(--radius-control)] bg-success" title="Success: var(--color-success)" />
+              <div className="w-16 h-16 rounded-[var(--radius-control)] bg-gradient-peach" title="Gradient Peach" />
+              <div className="w-16 h-16 rounded-[var(--radius-control)] bg-danger" title="Danger: var(--color-danger)" />
+              <div className="w-16 h-16 rounded-[var(--radius-control)] bg-card border border-border" title="Card: var(--color-card)" />
+              <div className="w-16 h-16 rounded-[var(--radius-control)] bg-background border border-border" title="Background: var(--color-background)" />
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card elevated>
           <CardHeader>
             <CardTitle>Spacing & Radius</CardTitle>
             <CardDescription>4px base unit, card 12px, control 8px</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-end gap-4">
-              <div className="h-4 bg-primary" style={{ width: "var(--space-1)" }} title="space-1 (8px)" />
-              <div className="h-4 bg-primary" style={{ width: "var(--space-2)" }} title="space-2 (16px)" />
-              <div className="h-4 bg-primary" style={{ width: "var(--space-3)" }} title="space-3 (24px)" />
-              <div className="h-4 bg-primary" style={{ width: "var(--space-4)" }} title="space-4 (32px)" />
-              <div className="h-4 bg-primary" style={{ width: "var(--space-6)" }} title="space-6 (48px)" />
+              <div className="h-4 bg-primary" style={{ width: "var(--space-1)" }} title="space-1" />
+              <div className="h-4 bg-primary" style={{ width: "var(--space-2)" }} title="space-2" />
+              <div className="h-4 bg-primary" style={{ width: "var(--space-3)" }} title="space-3" />
+              <div className="h-4 bg-primary" style={{ width: "var(--space-4)" }} title="space-4" />
+              <div className="h-4 bg-primary" style={{ width: "var(--space-6)" }} title="space-6" />
             </div>
             <div className="flex gap-4">
-              <div className="w-16 h-16 bg-primary rounded-[var(--radius-control)]" title="Control radius: 8px" />
-              <div className="w-16 h-16 bg-primary rounded-[var(--radius-card)]" title="Card radius: 12px" />
+              <div className="w-16 h-16 bg-primary rounded-[var(--radius-control)]" title="Control radius" />
+              <div className="w-16 h-16 bg-primary rounded-[var(--radius-card)]" title="Card radius" />
             </div>
           </CardContent>
         </Card>
 
-        <footer className="text-center text-text-muted text-sm py-8">
-          <p>Sinemic Design System — Prototype</p>
+        <footer className="text-center text-text-secondary text-sm py-8">
+          <p>Sinemic Design System</p>
         </footer>
       </div>
     </div>

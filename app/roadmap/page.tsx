@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle, Badge } from "@/components/ui";
-import { CheckIcon, ClockIcon, AlertCircleIcon } from "@/components/ui/icons";
+import Link from "next/link";
+import { CheckIcon, ClockIcon } from "@/components/ui/icons";
 
 type ItemStatus = "implemented" | "planned";
 
@@ -72,14 +73,14 @@ function StatusBadge({ status }: { status: keyof typeof statusConfig }) {
 
 export default function RoadmapPage() {
   return (
-    <div className="min-h-screen py-20 px-4 max-w-5xl mx-auto space-y-12">
+    <div className="min-h-screen py-24 px-6 max-w-5xl mx-auto space-y-24">
       <section className="space-y-4 text-center">
-        <h1 className="text-4xl font-bold text-text-primary font-heading">Roadmap</h1>
-        <p className="text-lg text-text-muted max-w-2xl mx-auto">
-          Features are grouped by category. <span className="font-medium">Implemented</span> items are in the prototype.
-          <span className="font-medium">Planned</span> items are not yet built.
+        <h1 className="font-heading text-4xl md:text-5xl font-normal tracking-tight text-text-heading">Roadmap</h1>
+        <p className="text-lg text-text-body max-w-2xl mx-auto leading-relaxed">
+          Features are grouped by category. <span className="font-medium text-text-heading">Implemented</span> items are in the prototype.
+          <span className="font-medium text-text-heading">Planned</span> items are not yet built.
         </p>
-        <div className="flex items-center justify-center gap-4 text-sm text-text-muted">
+        <div className="flex items-center justify-center gap-4 text-sm text-text-secondary">
           <span className="flex items-center gap-1">
             <CheckIcon className="w-4 h-4 text-success" aria-hidden="true" />
             Implemented in prototype
@@ -93,33 +94,33 @@ export default function RoadmapPage() {
 
       <div className="space-y-8">
         {roadmapItems.map((category, catIndex) => (
-          <Card key={catIndex}>
+          <Card key={catIndex} className="space-y-0">
             <CardHeader>
               <CardTitle className="text-xl">{category.category}</CardTitle>
             </CardHeader>
-            <CardContent>
-              <dl className="space-y-4">
+            <CardContent className="space-y-0">
+              <div className="divide-y divide-border">
                 {category.items.map((item, itemIndex) => (
-                  <div key={itemIndex} className="flex items-start justify-between gap-4 p-3 bg-background rounded-[var(--radius-control)]">
-                    <dt className="flex-1 text-text-primary font-medium">{item.title}</dt>
+                  <div key={itemIndex} className="flex items-start justify-between gap-4 p-4 bg-card/30 rounded-[var(--radius-control)] border border-border/50">
+                    <dt className="flex-1 text-text-body font-medium">{item.title}</dt>
                     <dd className="flex-shrink-0">
                       <StatusBadge status={item.status} />
                     </dd>
                   </div>
                 ))}
-              </dl>
+              </div>
             </CardContent>
           </Card>
         ))}
       </div>
 
       <section className="pt-8 border-t border-border text-center">
-        <p className="text-text-muted mb-4">
+        <p className="text-text-secondary mb-4">
           This is a prototype. Planned items have no implementation yet.
         </p>
-        <a href="/about" className="text-primary hover:underline font-medium">
+        <Link href="/about" className="text-primary hover:underline font-medium">
           ← Back to About
-        </a>
+        </Link>
       </section>
     </div>
   );

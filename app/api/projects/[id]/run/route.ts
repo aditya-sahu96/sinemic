@@ -11,6 +11,24 @@ const MODELS_PATH = path.join(process.cwd(), "engine", "config", "models.json");
 
 const DEFAULT_USER_ID = "default";
 
+interface ModelEntry {
+  modelId: string;
+  chat: boolean;
+  priority: number;
+  perUserDailyRequests: number;
+  perUserDailyTokens: number;
+  globalDailyRequests: number;
+  status: string;
+  notes?: string;
+}
+
+interface ModelsConfig {
+  provider: string;
+  baseUrl: string;
+  apiKeyEnv: string;
+  models: ModelEntry[];
+}
+
 interface RunRequest {
   task: string;
   targetFiles: string[];
@@ -40,7 +58,7 @@ export async function POST(
       return NextResponse.json({ error: "Task is required" }, { status: 400 });
     }
 
-    const modelsConfig = JSON.parse(fs.readFileSync(MODELS_PATH, "utf8"));
+    const modelsConfig: ModelsConfig = JSON.parse(fs.readFileSync(MODELS_PATH, "utf8"));
 
     // Build context pack (same pipeline as /context)
     const { detectStack } = await import("@/engine/modules/stack");
@@ -69,14 +87,14 @@ export async function POST(
 
     // Filter models: only chat models with status ok or untested, sorted by priority
     const candidateModels = modelsConfig.models
-      .filter((m: any) => m.chat && (m.status === "ok" || m.status === "untested"))
-      .sort((a: any, b: any) => (a.priority ?? 999) - (b.priority ?? 999));
+      .filter((m: ModelEntry) => m.chat && (m.status === "ok" || m.status === "untested"))
+      .sort((a: ModelEntry, b: ModelEntry) => (a.priority ?? 999) - (b.priority ?? 999));
 
     // Open usage store and remove models where user or global cap is reached
     const usageStore = openUsageStore(usageDbPath);
     const now = new Date();
 
-    const availableModels = candidateModels.filter((m: any) =>
+    const availableModels = candidateModels.filter((m: ModelEntry) =>
       usageStore.canUse(DEFAULT_USER_ID, m.modelId, {
         perUserDailyRequests: m.perUserDailyRequests,
         perUserDailyTokens: m.perUserDailyTokens,
@@ -93,7 +111,7 @@ export async function POST(
       });
     }
 
-    const providers = availableModels.map((m: any) => ({
+    const providers = availableModels.map((m: ModelEntry) => ({
       provider: modelsConfig.provider,
       baseUrl: modelsConfig.baseUrl,
       apiKeyEnv: modelsConfig.apiKeyEnv,
@@ -110,7 +128,7 @@ export async function POST(
     if (result.ok && result.modelId) {
       usageStore.record(DEFAULT_USER_ID, result.modelId, result.tokensUsed ?? 0, now);
       const used = usageStore.today(DEFAULT_USER_ID, result.modelId, now);
-      const model = availableModels.find((m: any) => m.modelId === result.modelId);
+      const model = availableModels.find((m: ModelEntry) => m.modelId === result.modelId);
       requestsLimit = model?.perUserDailyRequests ?? 0;
       requestsLeft = Math.max(0, requestsLimit - used.requests);
       answeredModel = result.modelId;

@@ -63,7 +63,7 @@ export async function complete(
       continue;
     }
 
-    let json: any;
+    let json: unknown;
     try {
       json = await res.json();
     } catch {
@@ -72,19 +72,24 @@ export async function complete(
     }
 
     // Errors can arrive inside a 200 response. Check the error field, not the model's text.
-    if (json?.error) {
-      const msg = String(json.error?.message ?? "provider error");
-      const code = Number(json.error?.code);
+    if (json && typeof json === "object" && "error" in json && json.error) {
+      const msg = String((json as { error?: { message?: string; code?: number } }).error?.message ?? "provider error");
+      const code = Number((json as { error?: { message?: string; code?: number } }).error?.code);
       const isQuota = code === 429 || /quota|rate limit/i.test(msg);
       lastError = { kind: isQuota ? "quota" : "other", message: msg };
       continue;
     }
 
     const tokensUsed =
-      typeof json?.usage?.total_tokens === "number" ? json.usage.total_tokens : undefined;
-    const content = json?.choices?.[0]?.message?.content;
+      typeof json === "object" && json !== null && "usage" in json
+        ? (json as { usage?: { total_tokens?: number } }).usage?.total_tokens
+        : undefined;
+    const content: string | undefined =
+      typeof json === "object" && json !== null && "choices" in json
+        ? ((json as { choices?: unknown[] }).choices?.[0] as { message?: { content?: string } } | undefined)?.message?.content
+        : undefined;
 
-    let parsed: any;
+    let parsed: unknown;
     try {
       parsed = JSON.parse(stripFences(String(content ?? "")));
     } catch {
@@ -98,10 +103,13 @@ export async function complete(
       };
     }
 
-    const patches: FilePatch[] = Array.isArray(parsed?.patches)
-      ? parsed.patches
-          .filter((p: any) => typeof p?.path === "string" && typeof p?.newContent === "string")
-          .map((p: any) => ({ path: p.path as string, newContent: p.newContent as string }))
+    const parsedObj = parsed as { patches?: { path?: unknown; newContent?: unknown }[] } | null;
+    const patches: FilePatch[] = Array.isArray(parsedObj?.patches)
+      ? parsedObj.patches
+          .filter((p): p is { path: string; newContent: string } =>
+            typeof p === "object" && p !== null && typeof p.path === "string" && typeof p.newContent === "string"
+          )
+          .map((p) => ({ path: p.path, newContent: p.newContent }))
       : [];
 
     if (patches.length === 0) {

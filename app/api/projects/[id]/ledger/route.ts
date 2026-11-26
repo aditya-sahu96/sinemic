@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import fs from "node:fs";
 import path from "node:path";
+import type { LedgerStore } from "@/engine/contracts";
 
 export const runtime = "nodejs";
 
 const DATA_DIR = path.join(process.cwd(), "data", "projects");
 const LEDGER_DIR = path.join(process.cwd(), "data", "ledger");
 
-function seedLedger(store: any) {
+function seedLedger(store: LedgerStore) {
   store.addRequirement("Discount above 1000", [
     "total > 1000 applies discount",
     "discount capped at 50%",

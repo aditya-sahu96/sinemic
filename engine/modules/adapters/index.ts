@@ -25,4 +25,5 @@ export { typescriptAdapter } from "./typescript";
 export { pythonAdapter } from "./python";
 export { goAdapter } from "./go";
 
-export default { getAdapter, buildGraph };
+const adaptersDefault = { getAdapter, buildGraph };
+export default adaptersDefault;

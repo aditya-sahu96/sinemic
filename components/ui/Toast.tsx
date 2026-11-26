@@ -18,7 +18,7 @@ interface ToastProps {
 const typeStyles: Record<ToastType, { bg: string; border: string; iconColor: string }> = {
   success: { bg: "bg-success/10", border: "border-success/20", iconColor: "text-success" },
   error: { bg: "bg-danger/10", border: "border-danger/20", iconColor: "text-danger" },
-  info: { bg: "bg-primary/10", border: "border-primary/20", iconColor: "text-primary" },
+  info: { bg: "bg-accent/10", border: "border-accent/20", iconColor: "text-accent" },
 };
 
 const typeIcons: Record<ToastType, React.ReactNode> = {
@@ -55,7 +55,7 @@ export function Toast({ id, type, title, message, onClose, duration = 5000 }: To
 
   return (
     <div
-      className={`flex items-start gap-3 p-4 rounded-[var(--radius-card)] border transition-base animate-slide-in ${styles.bg} ${styles.border}`}
+      className={`flex items-start gap-3 p-4 rounded-[var(--radius-card)] border backdrop-blur-[16px] transition-all duration-200 animate-slide-in ${styles.bg} ${styles.border}`}
       role="alert"
       aria-live="polite"
     >
@@ -63,7 +63,7 @@ export function Toast({ id, type, title, message, onClose, duration = 5000 }: To
         {typeIcons[type]}
       </span>
       <div className="flex-1 min-w-0">
-        <p className="font-medium text-text-primary">{title}</p>
+        <p className="font-medium text-text-heading">{title}</p>
         {message && <p className="text-text-muted text-sm mt-0.5">{message}</p>}
       </div>
       <Button

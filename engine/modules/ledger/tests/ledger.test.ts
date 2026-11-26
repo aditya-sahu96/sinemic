@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { openLedger, LedgerError } from "../index";
+import Database from "better-sqlite3";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 
 describe("ledger", () => {
   it("creates sequential ids", () => {
@@ -51,21 +55,14 @@ describe("ledger", () => {
   it("events append-only: update and delete fail", () => {
     const L = openLedger(":memory:", "p5");
     L.appendEvent("system", "t", {});
-    const db = (L as any);
-    // reach underlying db via a fresh connection to same memory? memory is per-connection, so use file
     L.close();
   });
 
   it("events append-only via raw db", () => {
-    const fs = require("node:fs");
-    const os = require("node:os");
-    const path = require("node:path");
     const tmp = path.join(os.tmpdir(), "ledger-test.db");
     try { fs.unlinkSync(tmp); } catch {}
     const L = openLedger(tmp, "p6");
     L.appendEvent("system", "t", {});
-    // open a second connection
-    const Database = require("better-sqlite3");
     const db2 = new Database(tmp);
     expect(() => db2.prepare("UPDATE events SET type='x'").run()).toThrow();
     expect(() => db2.prepare("DELETE FROM events").run()).toThrow();

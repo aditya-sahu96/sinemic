@@ -12,18 +12,20 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const baseStyles =
-  "inline-flex items-center justify-center font-medium transition-base rounded-[var(--radius-control)] min-h-[40px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
+  "inline-flex items-center justify-center font-medium transition-all duration-200 ease-out rounded-full min-h-[40px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50 disabled:cursor-not-allowed";
 
 const variantStyles: Record<ButtonVariant, string> = {
-  primary: "bg-primary text-white hover:bg-primary-hover",
-  secondary: "bg-surface text-text-primary border border-border hover:bg-background",
-  ghost: "bg-transparent text-text-primary hover:bg-background",
+  primary:
+    "bg-white text-[#080810] hover:bg-white/90 hover:-translate-y-0.5 hover:scale-[1.02] active:translate-y-0 active:scale-100 shadow-[0_4px_20px_-4px_rgba(255,255,255,0.25)] hover:shadow-[0_8px_24px_-6px_rgba(255,255,255,0.35)]",
+  secondary:
+    "bg-transparent border border-white/10 text-text-secondary hover:border-white/25 hover:bg-white/5 hover:text-text-heading hover:-translate-y-0.5",
+  ghost: "bg-transparent text-text-secondary hover:bg-white/5 hover:text-text-heading",
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
-  sm: "px-3 py-1.5 text-sm gap-1.5",
-  md: "px-4 py-2 text-base gap-2",
-  lg: "px-6 py-3 text-lg gap-2.5",
+  sm: "px-3 py-1.5 text-xs gap-1.5",
+  md: "px-4 py-2 text-sm gap-2",
+  lg: "px-6 py-2.5 text-sm gap-2.5",
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(

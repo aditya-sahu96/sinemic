@@ -129,6 +129,7 @@ export interface ProviderConfig {
 export interface FilePatch {
   path: string;                          // relative path
   newContent: string;                    // full new file content (simple and easy to verify)
+  oldContent?: string;                   // original file content before the patch
 }
 
 export interface ModelResult {

@@ -1,6 +1,6 @@
-import { Card, CardContent, Badge, Button } from "@/components/ui";
+import { Card, CardContent, Button } from "@/components/ui";
 import Link from "next/link";
-import { ArrowRightIcon, CheckIcon, XIcon, AlertCircleIcon } from "@/components/ui/icons";
+import { CheckIcon, XIcon } from "@/components/ui/icons";
 
 const verifiedItems = [
   { label: "TypeScript type-check passes", status: true },
@@ -22,122 +22,126 @@ const freeModelLimits = [
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen py-20 px-4 max-w-4xl mx-auto space-y-16">
+    <div className="min-h-screen py-24 px-6 max-w-4xl mx-auto space-y-24">
       <section className="space-y-6">
-        <h1 className="text-4xl font-bold text-text-primary font-heading">About Sinemic</h1>
-        <p className="text-lg text-text-muted">
+        <h1 className="font-heading text-4xl md:text-5xl font-normal tracking-tight text-text-heading">About Sinemic</h1>
+        <p className="text-lg text-text-body max-w-xl leading-relaxed">
           A prototype tool that helps you build with AI without losing context, skipping verification, or leaking secrets.
         </p>
       </section>
 
-      <section className="space-y-6">
-        <h2 className="text-2xl font-bold text-text-primary font-heading">The problem</h2>
-        <div className="prose prose-slate max-w-none text-text-muted space-y-4">
-          <p>
+      <section className="space-y-10">
+        <h2 className="font-heading text-2xl font-medium tracking-tight text-text-heading">The problem</h2>
+        <div className="space-y-6">
+          <p className="text-text-body leading-relaxed">
             AI coding assistants are powerful but they have three systemic problems:
           </p>
-          <ul className="list-disc list-inside space-y-3">
-            <li>
-              <strong>Context loss:</strong> When you switch models (Claude → GPT → Gemini), the new model doesn't know what
+          <ul className="list-disc list-inside space-y-4 text-text-body">
+            <li className="leading-relaxed">
+              <strong className="text-text-heading">Context loss:</strong> When you switch models (Claude → GPT → Gemini), the new model doesn&apos;t know what
               the previous one did. You re-explain the codebase, re-state constraints, re-list decisions.
             </li>
-            <li>
-              <strong>Unverified "done":</strong> Models claim completion but skip type-check, tests, builds, secret scans.
+            <li className="leading-relaxed">
+              <strong className="text-text-heading">Unverified &quot;done&quot;:</strong> Models claim completion but skip type-check, tests, builds, secret scans.
               Broken code ships because nobody ran the checks.
             </li>
-            <li>
-              <strong>No model portability:</strong> You're locked into one provider's ecosystem. Quota hits, rate limits,
+            <li className="leading-relaxed">
+              <strong className="text-text-heading">No model portability:</strong> You&apos;re locked into one provider&apos;s ecosystem. Quota hits, rate limits,
               or pricing changes stall your work.
             </li>
           </ul>
         </div>
       </section>
 
-      <section className="space-y-6">
-        <h2 className="text-2xl font-bold text-text-primary font-heading">How Sinemic works</h2>
-        <div className="prose prose-slate max-w-none text-text-muted space-y-4">
-          <p>
+      <section className="space-y-10">
+        <h2 className="font-heading text-2xl font-medium tracking-tight text-text-heading">How Sinemic works</h2>
+        <div className="space-y-6">
+          <p className="text-text-body leading-relaxed">
             Sinemic wraps the AI coding loop with three pillars:
           </p>
-          <ol className="list-decimal list-inside space-y-4">
-            <li>
-              <strong>Project memory (Context Packs):</strong> Every task creates a portable context pack — specs, decisions,
+          <ol className="list-decimal list-inside space-y-6 text-text-body">
+            <li className="leading-relaxed">
+              <strong className="text-text-heading">Project memory (Context Packs):</strong> Every task creates a portable context pack — specs, decisions,
               file tree, recent changes, test results. Switch models mid-task and the new model picks up exactly where
               the last one left off.
             </li>
-            <li>
-              <strong>Verified changes (Gatekeeper):</strong> Before any patch is applied, Sinemic runs typecheck, lint,
+            <li className="leading-relaxed">
+              <strong className="text-text-heading">Verified changes (Gatekeeper):</strong> Before any patch is applied, Sinemic runs typecheck, lint,
               tests, build, and secret scan. Results are shown in the UI. Skipped checks are visible, not hidden.
             </li>
-            <li>
-              <strong>Model-agnostic runtime:</strong> Uses OpenRouter to access 100+ models. Free tier models have
+            <li className="leading-relaxed">
+              <strong className="text-text-heading">Model-agnostic runtime:</strong> Uses OpenRouter to access 100+ models. Free tier models have
               automatic fallback on quota errors. Your usage and limits are visible in the header.
             </li>
           </ol>
         </div>
       </section>
 
-      <section className="space-y-6">
-        <h2 className="text-2xl font-bold text-text-primary font-heading">What is verified (and what is not)</h2>
-        <p className="text-text-muted">
-          Each verification step is explicit. Green = enforced. Gray = planned / not yet implemented in this prototype.
-        </p>
-        <div className="grid sm:grid-cols-2 gap-3">
-          {verifiedItems.map((item, i) => (
-            <div
-              key={i}
-              className="flex items-center gap-3 p-3 bg-surface border border-border rounded-[var(--radius-control)]"
-            >
-              {item.status ? (
-                <CheckIcon className="w-5 h-5 text-success flex-shrink-0" aria-hidden="true" />
-              ) : (
-                <XIcon className="w-5 h-5 text-text-muted flex-shrink-0" aria-hidden="true" />
-              )}
-              <span className={item.status ? "text-text-primary" : "text-text-muted"}>
-                {item.label}
-              </span>
-            </div>
-          ))}
-        </div>
-      </section>
+      <Card className="space-y-6">
+        <CardContent className="space-y-4">
+          <h2 className="font-heading text-2xl font-medium tracking-tight text-text-heading">What is verified (and what is not)</h2>
+          <p className="text-text-body leading-relaxed">
+            Each verification step is explicit. Green = enforced. Gray = planned / not yet implemented in this prototype.
+          </p>
+          <div className="grid sm:grid-cols-2 gap-3">
+            {verifiedItems.map((item, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-3 p-3 bg-card border border-border rounded-[var(--radius-control)]"
+              >
+                {item.status ? (
+                  <CheckIcon className="w-5 h-5 text-success flex-shrink-0" aria-hidden="true" />
+                ) : (
+                  <XIcon className="w-5 h-5 text-text-muted flex-shrink-0" aria-hidden="true" />
+                )}
+                <span className={item.status ? "text-text-heading" : "text-text-muted"}>
+                  {item.label}
+                </span>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
-      <section className="space-y-6">
-        <h2 className="text-2xl font-bold text-text-primary font-heading">Free model limits</h2>
-        <p className="text-text-muted">
-          Sinemic uses OpenRouter free models. Limits are approximate and enforced by OpenRouter.
-        </p>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-border">
-                <th className="pb-2 font-medium text-text-primary">Model</th>
-                <th className="pb-2 font-medium text-text-primary">Rate limit</th>
-                <th className="pb-2 font-medium text-text-primary">Context</th>
-              </tr>
-            </thead>
-            <tbody>
-              {freeModelLimits.map((m, i) => (
-                <tr key={i} className="border-b border-border/50">
-                  <td className="py-3 text-text-primary">{m.model}</td>
-                  <td className="py-3 text-text-muted">{m.limit}</td>
-                  <td className="py-3 text-text-muted">{m.context}</td>
+      <Card className="space-y-6">
+        <CardContent className="space-y-4">
+          <h2 className="font-heading text-2xl font-medium tracking-tight text-text-heading">Free model limits</h2>
+          <p className="text-text-body leading-relaxed">
+            Sinemic uses OpenRouter free models. Limits are approximate and enforced by OpenRouter.
+          </p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="pb-2 font-medium text-text-heading">Model</th>
+                  <th className="pb-2 font-medium text-text-heading">Rate limit</th>
+                  <th className="pb-2 font-medium text-text-heading">Context</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
+              </thead>
+              <tbody>
+                {freeModelLimits.map((m, i) => (
+                  <tr key={i} className="border-b border-border/50">
+                    <td className="py-3 text-text-body">{m.model}</td>
+                    <td className="py-3 text-text-secondary">{m.limit}</td>
+                    <td className="py-3 text-text-secondary">{m.context}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
 
       <section className="space-y-6 pt-8 border-t border-border">
-        <h2 className="text-2xl font-bold text-text-primary font-heading">Next steps</h2>
-        <div className="flex flex-col sm:flex-row gap-4">
-          <Link href="/roadmap" className="inline-flex items-center justify-center font-medium transition-base rounded-[var(--radius-control)] min-h-[40px] px-6 py-3 text-lg bg-primary text-white hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
-            View roadmap →
-          </Link>
-          <Link href="/projects" className="inline-flex items-center justify-center font-medium transition-base rounded-[var(--radius-control)] min-h-[40px] px-6 py-3 text-lg bg-surface text-text-primary border border-border hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
-            Try the demo →
-          </Link>
-        </div>
+        <h2 className="font-heading text-2xl font-medium tracking-tight text-text-heading">Next steps</h2>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Link href="/roadmap">
+              <Button size="lg">View roadmap →</Button>
+            </Link>
+            <Link href="/projects">
+              <Button variant="secondary" size="lg">Try the demo →</Button>
+            </Link>
+          </div>
       </section>
     </div>
   );
